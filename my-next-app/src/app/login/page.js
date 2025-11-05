@@ -29,6 +29,8 @@ export default function Login() {
 
             if (response.ok) {
                 // 登录成功，跳转到主页
+                // 保存用户信息到localStorage
+                localStorage.setItem('user', JSON.stringify(data));
                 router.push('/');
             } else {
                 setError(data.error || 'Login failed');
@@ -98,7 +100,7 @@ export default function Login() {
 
                     <div className="text-center">
                         <a href="/register" className="text-indigo-600 hover:text-indigo-500">
-                            Don't have an account? Sign up
+                            Don&apos;t have an account? Sign up
                         </a>
                     </div>
                 </form>
