@@ -7,7 +7,7 @@ export async function POST(req) {
 
         // 输入验证
         if (!email || !password) {
-            return new Response(JSON.stringify({ error: '邮箱和密码为必填项' }), { status: 400 });
+            return new Response(JSON.stringify({ error: 'Email and password are required' }), { status: 400 });
         }
 
         // 查找用户
@@ -16,13 +16,13 @@ export async function POST(req) {
         });
 
         if (!user) {
-            return new Response(JSON.stringify({ error: '用户不存在' }), { status: 400 });
+            return new Response(JSON.stringify({ error: 'User not found' }), { status: 400 });
         }
 
         // 验证密码
         const isPasswordValid = await bcrypt.compare(password, user.password);
         if (!isPasswordValid) {
-            return new Response(JSON.stringify({ error: '密码错误' }), { status: 400 });
+            return new Response(JSON.stringify({ error: 'Invalid password' }), { status: 400 });
         }
 
         // 返回用户信息（不包含密码）
@@ -30,6 +30,6 @@ export async function POST(req) {
         return new Response(JSON.stringify(userWithoutPassword), { status: 200 });
 
     } catch (err) {
-        return new Response(JSON.stringify({ error: '服务器内部错误' }), { status: 500 });
+        return new Response(JSON.stringify({ error: 'Internal server error' }), { status: 500 });
     }
 }
