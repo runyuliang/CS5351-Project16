@@ -16,13 +16,13 @@ export async function POST(req) {
         });
 
         if (!user) {
-            return new Response(JSON.stringify({ error: 'User not found' }), { status: 400 });
+            return new Response(JSON.stringify({ error: 'Invalid email or password' }), { status: 400 });
         }
 
         // 验证密码
         const isPasswordValid = await bcrypt.compare(password, user.password);
         if (!isPasswordValid) {
-            return new Response(JSON.stringify({ error: 'Invalid password' }), { status: 400 });
+            return new Response(JSON.stringify({ error: 'Invalid email or password' }), { status: 400 });
         }
 
         // 返回用户信息（不包含密码）
