@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-    title: "Kanban Board",
+    title: "my-next-app",
     description: "A Jira-like kanban tool for project management",
 };
 

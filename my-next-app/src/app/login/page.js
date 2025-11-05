@@ -28,10 +28,10 @@ export default function Login() {
             const data = await response.json();
 
             if (response.ok) {
-                // 登录成功，跳转到主页
                 // 保存用户信息到localStorage
                 localStorage.setItem('user', JSON.stringify(data));
-                router.push('/');
+                // 强制刷新页面以确保导航组件更新
+                window.location.href = '/';
             } else {
                 setError(data.error || 'Login failed');
             }
@@ -100,7 +100,7 @@ export default function Login() {
 
                     <div className="text-center">
                         <a href="/register" className="text-indigo-600 hover:text-indigo-500">
-                            Don&apos;t have an account? Sign up
+                            Don&#39;t have an account? Sign up
                         </a>
                     </div>
                 </form>

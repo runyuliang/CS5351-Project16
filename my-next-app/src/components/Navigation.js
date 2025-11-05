@@ -25,7 +25,7 @@ export default function Navigation() {
                 <div className="flex justify-between items-center h-16">
                     <div className="flex items-center">
                         <Link href="/" className="text-xl font-semibold text-gray-900">
-                            Kanban Board
+                            my-next-app
                         </Link>
                     </div>
                     <nav className="flex items-center space-x-4">
