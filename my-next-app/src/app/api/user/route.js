@@ -1,4 +1,5 @@
 import prisma from '@/lib/prisma';
+import bcrypt from 'bcrypt';
 
 export async function GET() {
   try {
@@ -10,28 +11,41 @@ export async function GET() {
 }
 
 export async function POST(req) {
-  const { name, email, role } = await req.json();
-
   try {
-    const user = await prisma.user.create({
-      data: { name, email, role },
+    const { name, email, password, role = 'user' } = await req.json();
+
+    // 输入验证
+    if (!name || !email || !password) {
+      return new Response(JSON.stringify({ error: '姓名、邮箱和密码为必填项' }), { status: 400 });
+    }
+
+    // 检查邮箱是否已存在
+    const existingUser = await prisma.user.findUnique({
+      where: { email }
     });
 
-    return new Response(JSON.stringify(user), { status: 201 });
+    if (existingUser) {
+      return new Response(JSON.stringify({ error: '该邮箱已被注册' }), { status: 400 });
+    }
+
+    // 加密密码
+    const hashedPassword = await bcrypt.hash(password, 12);
+
+    // 创建用户
+    const user = await prisma.user.create({
+      data: {
+        name,
+        email,
+        password: hashedPassword,
+        role
+      },
+    });
+
+    // 返回用户信息（不包含密码）
+    const { password: _, ...userWithoutPassword } = user;
+    return new Response(JSON.stringify(userWithoutPassword), { status: 201 });
+
   } catch (err) {
-    return new Response(JSON.stringify({ error: err.message }), { status: 500 });
+    return new Response(JSON.stringify({ error: '服务器内部错误' }), { status: 500 });
   }
 }
-
-
-async function addTestUser() {
-  await prisma.user.create({
-    data: {
-      name: 'TestUser',
-      email: 'testuser@example.com',
-      role: 'admin',
-    },
-  });
-}
-
-addTestUser().catch(console.error);
