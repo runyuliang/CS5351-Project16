@@ -8,9 +8,21 @@ datasource db {
 }
 
 model User {
-  id       Int      @id @default(autoincrement())
-  name     String
-  email    String   @unique
-  password String
-  role     String
+  id        Int        @id @default(autoincrement())
+  name      String
+  email     String     @unique
+  password  String
+  role      String
+  projects  Project[]  @relation("ProjectMembers")
+  managedProjects Project[] @relation("ProjectAdmins")
+}
+
+model Project {
+  id          Int       @id @default(autoincrement())
+  name        String
+
+  admin       User      @relation("ProjectAdmins", fields: [adminId], references: [id])
+  adminId     Int
+
+  members     User[]    @relation("ProjectMembers")
 }
