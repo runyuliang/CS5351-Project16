@@ -10,7 +10,12 @@ export default function Home() {
     // 从localStorage获取用户信息
     const savedUser = localStorage.getItem('user');
     if (savedUser) {
-      setUser(JSON.parse(savedUser));
+      try {
+        setUser(JSON.parse(savedUser));
+      } catch (e) {
+        localStorage.removeItem('user');
+        setUser(null);
+      }
     }
     setLoading(false);
   }, []);
