@@ -7,8 +7,12 @@ export async function POST(req) {
     const user = await prisma.user.findUnique({
       where: { id: userId },
       include: {
-        projects: true,          // 用户参与的项目
-        managedProjects: true,   // 用户管理的项目
+        projects: {
+          include: { admin: true, members: true },
+        },
+        managedProjects: {
+          include: { admin: true, members: true },
+        },
       },
     });
     if (!user) {
