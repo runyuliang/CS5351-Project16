@@ -10,6 +10,8 @@ export default function DashboardPage() {
   const [showModal, setShowModal] = useState(false);
   const [projectName, setProjectName] = useState("");
   const [memberEmails, setMemberEmails] = useState("");
+  const [currentUser, setCurrentUser] = useState(null);
+  const [inviteInputs, setInviteInputs] = useState({});
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
@@ -21,20 +23,14 @@ export default function DashboardPage() {
     const fetchGroups = async () => {
       try {
         const user = JSON.parse(storedUser);
+        setCurrentUser(user);
         const res = await fetch("/api/user/projects", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ userId: user.id }),
         });
         const data = await res.json();
-        console.log("Adding project:", data);
-        setGroups((prev) => {
-          const combined = [...prev, ...data.projects];
-          const unique = combined.filter((p, index, self) =>
-            index === self.findIndex((t) => t.id === p.id)
-          );
-          return unique;
-        });
+        setGroups(data.projects || []);
       } catch (err) {
         console.error("Error fetching groups:", err);
       } finally {
@@ -66,7 +62,6 @@ export default function DashboardPage() {
         console.log("Create project response:", data);
 
         alert(`Project "${data.name}" created!`);
-        console.log(data.id)
         setGroups((prev) => [...prev, data]);
         setShowModal(false);
         setProjectName("");
@@ -76,6 +71,63 @@ export default function DashboardPage() {
       }
     } catch (error) {
       console.error("Error:", error);
+    }
+  };
+
+  const isAdmin = (project) => currentUser && project.adminId === currentUser.id;
+
+  const handleInviteMembers = async (projectId) => {
+    if (!currentUser) return;
+    const emails = (inviteInputs[projectId] || "")
+      .split(",")
+      .map((e) => e.trim())
+      .filter(Boolean);
+    if (emails.length === 0) return;
+    try {
+      const res = await fetch("/api/project/invite", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ projectId, adminId: currentUser.id, memberEmails: emails }),
+      });
+      const data = await res.json();
+      if (!res.ok) return alert(data.error || "Invite failed");
+      setGroups((prev) => prev.map((p) => (p.id === projectId ? data : p)));
+      setInviteInputs((prev) => ({ ...prev, [projectId]: "" }));
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleRemoveMember = async (projectId, memberId) => {
+    if (!currentUser) return;
+    try {
+      const res = await fetch("/api/project/remove-member", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ projectId, adminId: currentUser.id, memberId }),
+      });
+      const data = await res.json();
+      if (!res.ok) return alert(data.error || "Remove failed");
+      setGroups((prev) => prev.map((p) => (p.id === projectId ? data : p)));
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleDeleteProject = async (projectId) => {
+    if (!currentUser) return;
+    if (!confirm("Delete this project? This cannot be undone.")) return;
+    try {
+      const res = await fetch("/api/project/delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ projectId, adminId: currentUser.id }),
+      });
+      const data = await res.json();
+      if (!res.ok) return alert(data.error || "Delete failed");
+      setGroups((prev) => prev.filter((p) => p.id !== projectId));
+    } catch (e) {
+      console.error(e);
     }
   };
 
@@ -96,10 +148,71 @@ export default function DashboardPage() {
       {groups.length === 0 ? (
         <p>You are not in any project yet.</p>
       ) : (
-        <ul className="space-y-2">
+        <ul className="space-y-3">
           {groups.map((g) => (
-            <li key={g.id} className="p-3 border rounded">
-              <strong>{g.name}</strong>
+            <li key={g.id} className="p-4 border border-gray-200 rounded-lg bg-white">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <strong className="text-gray-900">{g.name}</strong>
+                  {g.admin && (
+                    <span className="text-xs text-gray-500">Admin: {g.admin.name || g.admin.email}</span>
+                  )}
+                </div>
+                {isAdmin(g) && (
+                  <button
+                    onClick={() => handleDeleteProject(g.id)}
+                    className="px-3 py-1.5 text-sm rounded bg-rose-500 text-white hover:bg-rose-600"
+                  >
+                    Delete
+                  </button>
+                )}
+              </div>
+
+              <div className="mt-3">
+                <div className="text-base text-gray-700 mb-1">Members</div>
+                <div className="flex flex-wrap gap-2">
+                  {(g.members || []).map((m) => (
+                    <div
+                      key={m.id}
+                      className="flex items-center gap-3 px-3 py-2 rounded border border-gray-200 bg-gray-50"
+                    >
+                      <span className="text-base text-gray-900">
+                        {m.name || m.email}
+                        {m.name ? (
+                          <span className="text-gray-500"> ({m.email})</span>
+                        ) : null}
+                        <span className="text-gray-600"> — {m.id === g.adminId ? "Admin" : "Member"}</span>
+                      </span>
+                      {isAdmin(g) && m.id !== g.adminId && (
+                        <button
+                          onClick={() => handleRemoveMember(g.id, m.id)}
+                          className="text-xs px-2 py-1 rounded bg-gray-200 hover:bg-gray-300"
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {isAdmin(g) && (
+                <div className="mt-3 flex items-center gap-2">
+                  <input
+                    type="text"
+                    placeholder="Invite emails, comma separated"
+                    value={inviteInputs[g.id] || ""}
+                    onChange={(e) => setInviteInputs((prev) => ({ ...prev, [g.id]: e.target.value }))}
+                    className="flex-1 border border-gray-200 rounded px-3 py-2 text-sm focus:outline-none"
+                  />
+                  <button
+                    onClick={() => handleInviteMembers(g.id)}
+                    className="px-3 py-2 text-sm rounded bg-blue-600 text-white hover:bg-blue-700"
+                  >
+                    Invite
+                  </button>
+                </div>
+              )}
             </li>
           ))}
         </ul>
