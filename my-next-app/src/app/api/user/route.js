@@ -46,6 +46,6 @@ export async function POST(req) {
     return new Response(JSON.stringify(userWithoutPassword), { status: 201 });
 
   } catch (err) {
-    return new Response(JSON.stringify({ error: '服务器内部错误' }), { status: 500 });
+    return new Response(JSON.stringify({ error: err.message }), { status: 500 });
   }
 }
