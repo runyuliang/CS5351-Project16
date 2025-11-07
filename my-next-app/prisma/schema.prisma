@@ -25,4 +25,28 @@ model Project {
   adminId     Int
 
   members     User[]    @relation("ProjectMembers")
+  statuses    Status[]  @relation("ProjectStatuses")
+  tasks       Task[]    @relation("ProjectTasks")
+}
+
+model Status {
+  id        Int       @id @default(autoincrement())
+  name      String
+  project   Project   @relation("ProjectStatuses", fields: [projectId], references: [id], onDelete: Cascade)
+  projectId Int
+  tasks     Task[]    @relation("StatusTasks")
+  createdAt DateTime  @default(now())
+}
+
+model Task {
+  id          Int       @id @default(autoincrement())
+  title       String
+  description String?
+  tags        String[]  @default([])
+  project     Project   @relation("ProjectTasks", fields: [projectId], references: [id], onDelete: Cascade)
+  projectId   Int
+  status      Status    @relation("StatusTasks", fields: [statusId], references: [id], onDelete: Cascade)
+  statusId    Int
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }
