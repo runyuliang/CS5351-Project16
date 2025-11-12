@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -152,7 +151,6 @@ export default function DashboardPage() {
         <ul className="space-y-3">
           {groups.map((g) => (
             <li key={g.id} className="p-4 border border-gray-200 rounded-lg bg-white">
-              {/* 新增View按钮区域 */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <strong className="text-gray-900">{g.name}</strong>
@@ -160,24 +158,14 @@ export default function DashboardPage() {
                     <span className="text-xs text-gray-500">Admin: {g.admin.name || g.admin.email}</span>
                   )}
                 </div>
-                <div className="flex gap-2">
-                  {/* 新增View按钮，点击跳转到看板页面 */}
-                  <Link href={`/projects/${g.id}`}>
-                    <button
-                      className="px-3 py-1.5 text-sm rounded bg-blue-600 text-white hover:bg-blue-700"
-                    >
-                      View
-                    </button>
-                  </Link>
-                  {isAdmin(g) && (
-                    <button
-                      onClick={() => handleDeleteProject(g.id)}
-                      className="px-3 py-1.5 text-sm rounded bg-rose-500 text-white hover:bg-rose-600"
-                    >
-                      Delete
-                    </button>
-                  )}
-                </div>
+                {isAdmin(g) && (
+                  <button
+                    onClick={() => handleDeleteProject(g.id)}
+                    className="px-3 py-1.5 text-sm rounded bg-rose-500 text-white hover:bg-rose-600"
+                  >
+                    Delete
+                  </button>
+                )}
               </div>
 
               <div className="mt-3">
