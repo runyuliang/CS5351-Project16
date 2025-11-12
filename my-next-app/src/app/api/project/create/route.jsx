@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { ensureDefaultBoardColumns } from "@/lib/projectAccess";
 
 export async function POST(req) {
   try {
@@ -29,6 +30,7 @@ export async function POST(req) {
         members: true,
       },
     });
+
 
     return NextResponse.json(project);
   } catch (error) {
