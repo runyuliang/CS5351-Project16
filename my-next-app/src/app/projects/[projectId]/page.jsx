@@ -519,6 +519,33 @@ export default function ProjectBoard() {
             </button>
           </div>
 
+          {/* 新增：时间信息 */}
+          {(task.dueDate || task.estimatedHours) && (
+            <div className="mb-6">
+              <h4 className="mb-2 text-sm font-semibold text-gray-500">
+                时间信息
+              </h4>
+              <div className="flex flex-wrap gap-4">
+                {task.dueDate && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-gray-600">截止时间:</span>
+                    <span className="font-medium">
+                      {new Date(task.dueDate).toLocaleString()}
+                    </span>
+                  </div>
+                )}
+                {task.estimatedHours && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-gray-600">预估工时:</span>
+                    <span className="font-medium">
+                      {task.estimatedHours} 小时
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {task.description && (
             <div className="mb-6">
               <h4 className="mb-2 text-sm font-semibold text-gray-500">
