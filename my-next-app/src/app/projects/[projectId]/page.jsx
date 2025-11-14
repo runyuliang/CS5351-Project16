@@ -571,26 +571,48 @@ export default function ProjectBoard() {
   };
 
   const TaskItem = ({ task, statusId }) => {
-    const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
-      useSortable({
-        id: `task_${task.id}`,
-        data: { taskId: task.id, task, statusId },
-      });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
+    useSortable({
+      id: `task_${task.id}`,
+      data: { taskId: task.id, task, statusId },
+    });
 
-    const [showAssigneeSelect, setShowAssigneeSelect] = useState(false);
-    const [selectPos, setSelectPos] = useState({ x: 0, y: 0 });
+  const [showAssigneeSelect, setShowAssigneeSelect] = useState(false);
+  const [selectPos, setSelectPos] = useState({ x: 0, y: 0 });
 
-    const handleAssigneeContextMenu = (event) => {
-      event.preventDefault();
-      setShowAssigneeSelect(true);
-      setSelectPos({ x: event.clientX, y: event.clientY });
-    };
+  const handleAssigneeContextMenu = (event) => {
+    event.preventDefault();
+    setShowAssigneeSelect(true);
+    setSelectPos({ x: event.clientX, y: event.clientY });
+  };
 
-    const handleUserSelect = async (selectedUserId) => {
-      const selectedUser =
-        users.find((member) => String(member.id) === String(selectedUserId)) ||
-        null;
-      const previousAssignee = task.assignee;
+  const handleUserSelect = async (selectedUserId) => {
+    const selectedUser =
+      users.find((member) => String(member.id) === String(selectedUserId)) ||
+      null;
+    const previousAssignee = task.assignee;
+
+    setStatuses((prev) =>
+      prev.map((status) =>
+        status.id === statusId
+          ? {
+              ...status,
+              tasks: status.tasks.map((item) =>
+                item.id === task.id ? { ...item, assignee: selectedUser } : item
+              ),
+            }
+          : status
+      )
+    );
+
+    setShowAssigneeSelect(false);
+
+    try {
+      const payload = await persistAssignee(
+        Number(task.numericId ?? task.id),
+        selectedUser ? selectedUser.id : null
+      );
+      const formatted = formatTask(payload);
 
       setStatuses((prev) =>
         prev.map((status) =>
@@ -598,141 +620,143 @@ export default function ProjectBoard() {
             ? {
                 ...status,
                 tasks: status.tasks.map((item) =>
-                  item.id === task.id ? { ...item, assignee: selectedUser } : item
+                  item.id === task.id
+                    ? {
+                        ...item,
+                        assignee: formatted.assignee,
+                        updatedAt: formatted.updatedAt,
+                      }
+                    : item
                 ),
               }
             : status
         )
       );
+    } catch (error) {
+      console.error("更新任务失败：", error);
+      alert(error.message || "更新任务失败");
+      setStatuses((prev) =>
+        prev.map((status) =>
+          status.id === statusId
+            ? {
+                ...status,
+                tasks: status.tasks.map((item) =>
+                  item.id === task.id
+                    ? { ...item, assignee: previousAssignee }
+                    : item
+                ),
+              }
+            : status
+        )
+      );
+    }
+  };
 
-      setShowAssigneeSelect(false);
+  return (
+    <>
+      <div
+        ref={setNodeRef}
+        style={{
+          transform: CSS.Transform.toString(transform),
+          transition,
+          opacity: isDragging ? 0.4 : 1,
+          cursor: isDragging ? "grabbing" : "pointer",
+          touchAction: "none",
+        }}
+        {...attributes}
+        {...listeners}
+        className="mb-3 rounded-md border border-gray-200 bg-white p-4 shadow-sm transition-all hover:shadow-md"
+        onClick={() => setSelectedTask(task)}
+      >
+        <h4 className="font-medium text-gray-900">{task.title}</h4>
 
-      try {
-        const payload = await persistAssignee(
-          Number(task.numericId ?? task.id),
-          selectedUser ? selectedUser.id : null
-        );
-        const formatted = formatTask(payload);
-
-        setStatuses((prev) =>
-          prev.map((status) =>
-            status.id === statusId
-              ? {
-                  ...status,
-                  tasks: status.tasks.map((item) =>
-                    item.id === task.id
-                      ? {
-                          ...item,
-                          assignee: formatted.assignee,
-                          updatedAt: formatted.updatedAt,
-                        }
-                      : item
-                  ),
-                }
-              : status
-          )
-        );
-      } catch (error) {
-        console.error("更新任务失败：", error);
-        alert(error.message || "更新任务失败");
-        setStatuses((prev) =>
-          prev.map((status) =>
-            status.id === statusId
-              ? {
-                  ...status,
-                  tasks: status.tasks.map((item) =>
-                    item.id === task.id
-                      ? { ...item, assignee: previousAssignee }
-                      : item
-                  ),
-                }
-              : status
-          )
-        );
-      }
-    };
-
-    return (
-      <>
-        <div
-          ref={setNodeRef}
-          style={{
-            transform: CSS.Transform.toString(transform),
-            transition,
-            opacity: isDragging ? 0.4 : 1,
-            cursor: isDragging ? "grabbing" : "pointer",
-            touchAction: "none",
-          }}
-          {...attributes}
-          {...listeners}
-          className="mb-3 rounded-md border border-gray-200 bg-white p-4 shadow-sm transition-all hover:shadow-md"
-          onClick={() => setSelectedTask(task)}
-        >
-          <h4 className="font-medium text-gray-900">{task.title}</h4>
-          {task.description && (
-            <p className="mt-1 line-clamp-2 text-sm text-gray-600">
-              {task.description}
-            </p>
-          )}
-          {task.tags.length > 0 && (
-            <div className="mt-2 flex flex-wrap gap-1">
-              {task.tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="rounded-full bg-blue-50 px-2 py-0.5 text-xs text-blue-700"
-                >
-                  {tag}
-                </span>
-              ))}
-            </div>
-          )}
-          <div
-            onContextMenu={handleAssigneeContextMenu}
-            className="mt-2 cursor-pointer rounded-md border px-2 py-1 text-xs hover:bg-gray-50"
-          >
-            {task.assignee
-              ? `分配给: ${task.assignee.name}`
-              : "未分配（右键分配）"}
-          </div>
-          <div className="mt-2 text-xs text-gray-400">{task.createdAt}</div>
-        </div>
-
-        {showAssigneeSelect && (
-          <div
-            style={{
-              position: "fixed",
-              left: selectPos.x,
-              top: selectPos.y,
-              backgroundColor: "white",
-              border: "1px solid #e5e7eb",
-              borderRadius: "4px",
-              padding: "4px",
-              boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
-              minWidth: "140px",
-              zIndex: 1000,
-            }}
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div
-              onClick={() => handleUserSelect("")}
-              className="cursor-pointer px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
-            >
-              未分配
-            </div>
-            {users.map((member) => (
-              <div
-                key={member.id}
-                onClick={() => handleUserSelect(member.id)}
-                className="cursor-pointer px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
+        {/* 新增：时间信息显示 */}
+        {(task.dueDate || task.estimatedHours) && (
+          <div className="mt-1 flex flex-wrap gap-2">
+            {task.dueDate && (
+              <span
+                className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded cursor-pointer hover:bg-gray-200"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  // 这里稍后会实现时间编辑功能
+                  console.log("编辑时间:", task);
+                }}
               >
-                {member.name || member.email}
-              </div>
+                📅 {new Date(task.dueDate).toLocaleDateString()}
+              </span>
+            )}
+            {task.estimatedHours && (
+              <span className="text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
+                ⏱️ {task.estimatedHours}h
+              </span>
+            )}
+          </div>
+        )}
+
+        {task.description && (
+          <p className="mt-1 line-clamp-2 text-sm text-gray-600">
+            {task.description}
+          </p>
+        )}
+        {task.tags.length > 0 && (
+          <div className="mt-2 flex flex-wrap gap-1">
+            {task.tags.map((tag) => (
+              <span
+                key={tag}
+                className="rounded-full bg-blue-50 px-2 py-0.5 text-xs text-blue-700"
+              >
+                {tag}
+              </span>
             ))}
           </div>
         )}
-      </>
-    );
-  };
+        <div
+          onContextMenu={handleAssigneeContextMenu}
+          className="mt-2 cursor-pointer rounded-md border px-2 py-1 text-xs hover:bg-gray-50"
+        >
+          {task.assignee
+            ? `分配给: ${task.assignee.name}`
+            : "未分配（右键分配）"}
+        </div>
+        <div className="mt-2 text-xs text-gray-400">{task.createdAt}</div>
+      </div>
+
+      {showAssigneeSelect && (
+        <div
+          style={{
+            position: "fixed",
+            left: selectPos.x,
+            top: selectPos.y,
+            backgroundColor: "white",
+            border: "1px solid #e5e7eb",
+            borderRadius: "4px",
+            padding: "4px",
+            boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
+            minWidth: "140px",
+            zIndex: 1000,
+          }}
+          onClick={(event) => event.stopPropagation()}
+        >
+          <div
+            onClick={() => handleUserSelect("")}
+            className="cursor-pointer px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
+          >
+            未分配
+          </div>
+          {users.map((member) => (
+            <div
+              key={member.id}
+              onClick={() => handleUserSelect(member.id)}
+              className="cursor-pointer px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
+            >
+              {member.name || member.email}
+            </div>
+          ))}
+        </div>
+      )}
+    </>
+  );
+};
 
   const StatusColumn = ({ status }) => {
     const { setNodeRef, attributes } = useDroppable({
