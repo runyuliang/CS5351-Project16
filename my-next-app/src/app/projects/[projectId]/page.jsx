@@ -38,6 +38,9 @@ const formatTask = (task) => {
     position: typeof task.position === "number" ? task.position : 0,
     createdAt,
     updatedAt: task.updatedAt,
+    dueDate: task.dueDate,        
+    estimatedHours: task.estimatedHours,
+    actualHours: task.actualHours,
     assignee: task.assignee
       ? {
           id: task.assignee.id,
