@@ -1,13 +1,17 @@
-import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
-import { getProjectWithAccess } from "@/lib/projectAccess";
-
 export async function POST(req, context) {
   try {
     const params = await context.params;
     const projectId = Number(params.projectId);
-    const { userId, columnId, title, description, tags = [], assigneeId } =
-      await req.json();
+    const { 
+      userId, 
+      columnId, 
+      title, 
+      description, 
+      tags = [], 
+      assigneeId,
+      dueDate,        // 新增
+      estimatedHours  // 新增
+    } = await req.json();
 
     if (!title || !title.trim()) {
       return NextResponse.json(
@@ -49,6 +53,8 @@ export async function POST(req, context) {
         tags: Array.isArray(tags) ? tags : [],
         assigneeId: assigneeId ? Number(assigneeId) : null,
         position: nextPosition,
+        dueDate: dueDate ? new Date(dueDate) : null,           // 新增
+        estimatedHours: estimatedHours ? Number(estimatedHours) : null, // 新增
       },
       include: {
         assignee: {
@@ -65,6 +71,8 @@ export async function POST(req, context) {
       position: task.position,
       createdAt: task.createdAt,
       updatedAt: task.updatedAt,
+      dueDate: task.dueDate,           // 新增
+      estimatedHours: task.estimatedHours, // 新增
       assignee: task.assignee
         ? {
             id: task.assignee.id,
@@ -81,4 +89,3 @@ export async function POST(req, context) {
     );
   }
 }
-
