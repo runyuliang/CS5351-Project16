@@ -597,6 +597,162 @@ export default function ProjectBoard() {
     );
   };
 
+  // 在 TaskItem 组件之前添加 TimeEditModal 组件
+  const TimeEditModal = ({ task, onSave, onClose }) => {
+    const [formData, setFormData] = useState({
+      dueDate: task.dueDate ? new Date(task.dueDate).toISOString().slice(0, 16) : '',
+      estimatedHours: task.estimatedHours || '',
+      actualHours: task.actualHours || '',
+    });
+
+    const handleChange = (e) => {
+      setFormData({
+        ...formData,
+        [e.target.name]: e.target.value,
+      });
+    };
+
+    const handleSave = async () => {
+      try {
+        const updatedTask = {
+          ...task,
+          dueDate: formData.dueDate ? new Date(formData.dueDate).toISOString() : null,
+          estimatedHours: formData.estimatedHours ? Number(formData.estimatedHours) : null,
+          actualHours: formData.actualHours ? Number(formData.actualHours) : null,
+        };
+
+        await onSave(updatedTask);
+        onClose();
+      } catch (error) {
+        console.error("保存时间设置失败:", error);
+        alert("保存失败，请重试");
+      }
+    };
+
+    const handleClear = (field) => {
+      setFormData({
+        ...formData,
+        [field]: '',
+      });
+    };
+
+    return (
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+        <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
+          <div className="p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold text-gray-800">设置时间</h2>
+              <button
+                onClick={onClose}
+                className="text-gray-500 hover:text-gray-700 text-2xl"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {/* 截止时间 */}
+              <div>
+                <div className="flex justify-between items-center mb-1">
+                  <label className="block text-sm font-medium text-gray-700">
+                    截止时间
+                  </label>
+                  {formData.dueDate && (
+                    <button
+                      type="button"
+                      onClick={() => handleClear('dueDate')}
+                      className="text-xs text-red-500 hover:text-red-700"
+                    >
+                      清除
+                    </button>
+                  )}
+                </div>
+                <input
+                  type="datetime-local"
+                  name="dueDate"
+                  value={formData.dueDate}
+                  onChange={handleChange}
+                  className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              {/* 预估工时 */}
+              <div>
+                <div className="flex justify-between items-center mb-1">
+                  <label className="block text-sm font-medium text-gray-700">
+                    预估工时 (小时)
+                  </label>
+                  {formData.estimatedHours && (
+                    <button
+                      type="button"
+                      onClick={() => handleClear('estimatedHours')}
+                      className="text-xs text-red-500 hover:text-red-700"
+                    >
+                      清除
+                    </button>
+                  )}
+                </div>
+                <input
+                  type="number"
+                  name="estimatedHours"
+                  min="0"
+                  step="0.5"
+                  value={formData.estimatedHours}
+                  onChange={handleChange}
+                  placeholder="输入预估工时"
+                  className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              {/* 实际工时 */}
+              <div>
+                <div className="flex justify-between items-center mb-1">
+                  <label className="block text-sm font-medium text-gray-700">
+                    实际工时 (小时)
+                  </label>
+                  {formData.actualHours && (
+                    <button
+                      type="button"
+                      onClick={() => handleClear('actualHours')}
+                      className="text-xs text-red-500 hover:text-red-700"
+                    >
+                      清除
+                    </button>
+                  )}
+                </div>
+                <input
+                  type="number"
+                  name="actualHours"
+                  min="0"
+                  step="0.5"
+                  value={formData.actualHours}
+                  onChange={handleChange}
+                  placeholder="输入实际工时"
+                  className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end space-x-2 pt-6">
+              <button
+                onClick={onClose}
+                className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+              >
+                取消
+              </button>
+              <button
+                onClick={handleSave}
+                className="px-4 py-2 bg-blue-600 border border-transparent rounded-md text-sm font-medium text-white hover:bg-blue-700"
+              >
+                保存
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   const TaskItem = ({ task, statusId }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({
@@ -606,6 +762,7 @@ export default function ProjectBoard() {
 
   const [showAssigneeSelect, setShowAssigneeSelect] = useState(false);
   const [selectPos, setSelectPos] = useState({ x: 0, y: 0 });
+  const [showTimeEdit, setShowTimeEdit] = useState(false);
 
   const handleAssigneeContextMenu = (event) => {
     event.preventDefault();
@@ -679,6 +836,76 @@ export default function ProjectBoard() {
     }
   };
 
+  // 处理时间保存
+  const handleTimeSave = async (updatedTask) => {
+    if (!user || !routeProjectId) return;
+
+    try {
+      const res = await fetch(
+        `/api/projects/${routeProjectId}/board/tasks/${task.numericId ?? task.id}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId: user.id,
+            dueDate: updatedTask.dueDate,
+            estimatedHours: updatedTask.estimatedHours,
+            actualHours: updatedTask.actualHours,
+          }),
+        }
+      );
+
+      const payload = await res.json();
+
+      if (!res.ok) {
+        throw new Error(payload.error || "更新时间失败");
+      }
+
+      // 更新本地状态
+      setStatuses((prev) =>
+        prev.map((status) =>
+          status.id === statusId
+            ? {
+                ...status,
+                tasks: status.tasks.map((item) =>
+                  item.id === task.id
+                    ? {
+                        ...item,
+                        dueDate: payload.dueDate,
+                        estimatedHours: payload.estimatedHours,
+                        actualHours: payload.actualHours,
+                      }
+                    : item
+                ),
+              }
+            : status
+        )
+      );
+    } catch (error) {
+      console.error("更新时间失败:", error);
+      throw error;
+    }
+  };
+
+  // 格式化时间显示
+  const formatDueDate = (dueDate) => {
+    if (!dueDate) return '';
+    const date = new Date(dueDate);
+    const now = new Date();
+    const isToday = date.toDateString() === now.toDateString();
+    const isTomorrow = new Date(now.setDate(now.getDate() + 1)).toDateString() === date.toDateString();
+
+    if (isToday) return '今天';
+    if (isTomorrow) return '明天';
+    return date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
+  };
+
+  // 检查是否过期
+  const isOverdue = (dueDate) => {
+    if (!dueDate) return false;
+    return new Date(dueDate) < new Date();
+  };
+
   return (
     <>
       <div
@@ -697,31 +924,63 @@ export default function ProjectBoard() {
       >
         <h4 className="font-medium text-gray-900">{task.title}</h4>
 
-        {/* 新增：时间信息显示 */}
-        {(task.dueDate || task.estimatedHours) && (
-          <div className="mt-1 flex flex-wrap gap-2">
+        {/* 时间信息区域 */}
+        {(task.dueDate || task.estimatedHours || task.actualHours) && (
+          <div className="mt-2 flex flex-wrap gap-1">
             {task.dueDate && (
-              <span
-                className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded cursor-pointer hover:bg-gray-200"
+              <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  // 这里稍后会实现时间编辑功能
-                  console.log("编辑时间:", task);
+                  setShowTimeEdit(true);
                 }}
+                className={`text-xs px-2 py-1 rounded flex items-center gap-1 transition-colors ${
+                  isOverdue(task.dueDate)
+                    ? "text-red-600 bg-red-50 hover:bg-red-100"
+                    : "text-gray-600 bg-gray-100 hover:bg-gray-200"
+                }`}
               >
-                📅 {new Date(task.dueDate).toLocaleDateString()}
-              </span>
+                📅 {formatDueDate(task.dueDate)}
+                {isOverdue(task.dueDate) && " ⚠️"}
+              </button>
             )}
             {task.estimatedHours && (
-              <span className="text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowTimeEdit(true);
+                }}
+                className="text-xs text-blue-600 bg-blue-50 hover:bg-blue-100 px-2 py-1 rounded flex items-center gap-1 transition-colors"
+              >
                 ⏱️ {task.estimatedHours}h
-              </span>
+              </button>
+            )}
+            {task.actualHours && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowTimeEdit(true);
+                }}
+                className="text-xs text-green-600 bg-green-50 hover:bg-green-100 px-2 py-1 rounded flex items-center gap-1 transition-colors"
+              >
+                ✅ {task.actualHours}h
+              </button>
             )}
           </div>
         )}
 
+        {/* 时间按钮 - 即使没有设置时间也显示 */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowTimeEdit(true);
+          }}
+          className="mt-2 text-xs text-gray-500 hover:text-gray-700 bg-transparent hover:bg-gray-50 border border-gray-300 rounded px-2 py-1 transition-colors flex items-center gap-1 w-full justify-center"
+        >
+          ⚙️ 设置时间
+        </button>
+
         {task.description && (
-          <p className="mt-1 line-clamp-2 text-sm text-gray-600">
+          <p className="mt-2 line-clamp-2 text-sm text-gray-600">
             {task.description}
           </p>
         )}
@@ -748,6 +1007,16 @@ export default function ProjectBoard() {
         <div className="mt-2 text-xs text-gray-400">{task.createdAt}</div>
       </div>
 
+      {/* 时间编辑模态框 */}
+      {showTimeEdit && (
+        <TimeEditModal
+          task={task}
+          onSave={handleTimeSave}
+          onClose={() => setShowTimeEdit(false)}
+        />
+      )}
+
+      {/* 分配人员选择器 */}
       {showAssigneeSelect && (
         <div
           style={{
