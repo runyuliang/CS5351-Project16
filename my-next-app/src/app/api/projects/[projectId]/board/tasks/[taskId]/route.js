@@ -1,21 +1,48 @@
+import { NextResponse } from "next/server";
+import prisma from "@/lib/prisma";
+import { getProjectWithAccess } from "@/lib/projectAccess";
+
 export async function PATCH(req, context) {
   try {
     const params = await context.params;
     const projectId = Number(params.projectId);
     const taskId = Number(params.taskId);
-    const body = await req.json();
-    const { 
-      userId, 
-      assigneeId, 
-      title, 
-      description, 
-      tags, 
-      columnId, 
+
+    // 确保正确解析请求体
+    let body;
+    try {
+      body = await req.json();
+    } catch (parseError) {
+      console.error("JSON解析错误:", parseError);
+      return NextResponse.json(
+        { error: "Invalid JSON in request body" },
+        { status: 400 }
+      );
+    }
+
+    const {
+      userId,
+      assigneeId,
+      title,
+      description,
+      tags,
+      columnId,
       position,
-      dueDate,        // 新增
-      estimatedHours, // 新增
-      actualHours     // 新增
+      dueDate,
+      estimatedHours,
+      actualHours
     } = body;
+
+    console.log("Received task update data:", {
+      userId, taskId, dueDate, estimatedHours, actualHours
+    });
+
+    if (!userId) {
+      return NextResponse.json(
+        { error: "User ID is required" },
+        { status: 400 }
+      );
+    }
 
     const access = await getProjectWithAccess(projectId, Number(userId));
     if (access.error) {
@@ -72,18 +99,20 @@ export async function PATCH(req, context) {
       data.position = position;
     }
 
-    // 新增时间字段处理
+    // 修复时间字段处理
     if (typeof dueDate !== "undefined") {
       data.dueDate = dueDate ? new Date(dueDate) : null;
     }
 
     if (typeof estimatedHours !== "undefined") {
-      data.estimatedHours = estimatedHours ? Number(estimatedHours) : null;
+      data.estimatedHours = estimatedHours !== null && estimatedHours !== '' ? Number(estimatedHours) : null;
     }
 
     if (typeof actualHours !== "undefined") {
-      data.actualHours = actualHours ? Number(actualHours) : null;
+      data.actualHours = actualHours !== null && actualHours !== '' ? Number(actualHours) : null;
     }
+
+    console.log("Updating task with data:", data);
 
     const updated = await prisma.boardTask.update({
       where: { id: taskId },
@@ -93,7 +122,7 @@ export async function PATCH(req, context) {
       },
     });
 
-    return NextResponse.json({
+    const responseData = {
       id: updated.id,
       title: updated.title,
       description: updated.description,
@@ -102,9 +131,9 @@ export async function PATCH(req, context) {
       createdAt: updated.createdAt,
       updatedAt: updated.updatedAt,
       columnId: updated.columnId,
-      dueDate: updated.dueDate,           // 新增
-      estimatedHours: updated.estimatedHours, // 新增
-      actualHours: updated.actualHours,   // 新增
+      dueDate: updated.dueDate,
+      estimatedHours: updated.estimatedHours,
+      actualHours: updated.actualHours,
       assignee: updated.assignee
         ? {
             id: updated.assignee.id,
@@ -112,11 +141,15 @@ export async function PATCH(req, context) {
             email: updated.assignee.email,
           }
         : null,
-    });
+    };
+
+    console.log("Task updated successfully:", responseData);
+
+    return NextResponse.json(responseData);
   } catch (error) {
     console.error("Failed to update task:", error);
     return NextResponse.json(
-      { error: "Failed to update task" },
+      { error: "Failed to update task: " + error.message },
       { status: 500 }
     );
   }
