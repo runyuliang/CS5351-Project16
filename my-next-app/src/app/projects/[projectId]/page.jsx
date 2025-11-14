@@ -19,6 +19,8 @@ const INITIAL_TASK_FORM = {
   statusId: "",
   tags: "",
   assignee: null,
+  dueDate: null,        // 新增
+  estimatedHours: null, // 新增
 };
 
 const formatTask = (task) => {
@@ -840,7 +842,7 @@ export default function ProjectBoard() {
           </div>
 
           <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-5">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-6">
               <div>
                 <label className="mb-1 block text-sm text-gray-600">
                   任务标题 <span className="text-red-500">*</span>
@@ -924,6 +926,44 @@ export default function ProjectBoard() {
                     ))
                   )}
                 </select>
+              </div>
+                  {/* 新增：截止时间 */}
+              <div>
+                <label className="mb-1 block text-sm text-gray-600">
+                  截止时间
+                </label>
+                <input
+                  type="datetime-local"
+                  value={newTask.dueDate || ''}
+                  onChange={(event) =>
+                    setNewTask((prev) => ({
+                      ...prev,
+                      dueDate: event.target.value,
+                    }))
+                  }
+                  className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              {/* 新增：预估工时 */}
+              <div>
+                <label className="mb-1 block text-sm text-gray-600">
+                  预估工时 (小时)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.5"
+                  value={newTask.estimatedHours || ''}
+                  onChange={(event) =>
+                    setNewTask((prev) => ({
+                      ...prev,
+                      estimatedHours: event.target.value ? Number(event.target.value) : null,
+                    }))
+                  }
+                  placeholder="如：8"
+                  className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
               </div>
 
               <div>
