@@ -55,4 +55,7 @@ model BoardTask {
   position    Int         @default(0)
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
+  dueDate     DateTime?   // 截止时间
+  estimatedHours Int?     // 预估工时（小时）
+  actualHours Int?        // 实际工时（小时）
 }
