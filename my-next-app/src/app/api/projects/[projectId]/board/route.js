@@ -50,6 +50,10 @@ export async function GET(req, context) {
           position: task.position,
           createdAt: task.createdAt,
           updatedAt: task.updatedAt,
+          // ✅ 添加时间字段
+          dueDate: task.dueDate,
+          estimatedHours: task.estimatedHours,
+          actualHours: task.actualHours,
           assignee: task.assignee
             ? {
                 id: task.assignee.id,
@@ -68,4 +72,3 @@ export async function GET(req, context) {
     );
   }
 }
-
