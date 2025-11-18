@@ -61,7 +61,7 @@ model BoardTask {
   dueDate     DateTime?   // 截止时间
   estimatedHours Int?     // 预估工时（小时）
   actualHours Int?        // 实际工时（小时）
-  status        String      @default("未开始") // 新增状态字段，默认“未开始”
+  status      String      @default("未开始")
 }
 
 model Sprint {
@@ -69,10 +69,12 @@ model Sprint {
   project     Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
   projectId   Int
   name        String
-  order       Int          // Sprint 顺序，从 1 开始
-  dueDate   DateTime? // 截止时间，可选
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  status      String       @default("未开始") // 新增状态字段: "未开始" | "正在冲刺" | "完成"
+  order       Int
+  dueDate     DateTime?    // 采用 add_sprint_timeline 分支的 dueDate
+  startDate   DateTime?    // 保留 main 分支的 startDate
+  endDate     DateTime?    // 保留 main 分支的 endDate
+  status      String       @default("未开始")
   tasks       BoardTask[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
 }

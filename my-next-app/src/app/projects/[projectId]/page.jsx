@@ -38,9 +38,10 @@ const formatTask = (task) => {
     position: typeof task.position === "number" ? task.position : 0,
     createdAt,
     updatedAt: task.updatedAt,
-    dueDate: task.dueDate,
-    estimatedHours: task.estimatedHours,
-    actualHours: task.actualHours,
+    // 确保时间字段被正确处理
+    dueDate: task.dueDate || task.due_date || null,  // 支持两种字段名
+    estimatedHours: task.estimatedHours || task.estimated_hours || null,
+    actualHours: task.actualHours || task.actual_hours || null,
     assignee: task.assignee
       ? {
           id: task.assignee.id,
@@ -243,39 +244,51 @@ export default function ProjectBoard() {
   const projectIdNumber = Number(routeProjectId);
 
   const fetchBoardData = useCallback(
-    async (projectId, userId) => {
-      if (!projectId || !userId) {
-        return;
+  async (projectId, userId) => {
+    if (!projectId || !userId) {
+      return;
+    }
+
+    setLoadingBoard(true);
+    setBoardError("");
+
+    try {
+      const res = await fetch(
+        `/api/projects/${projectId}/board?userId=${userId}`
+      );
+      const payload = await res.json();
+
+      if (!res.ok) {
+        throw new Error(payload.error || "加载看板失败");
       }
 
-      setLoadingBoard(true);
-      setBoardError("");
+      // 添加调试日志
+      console.log('API返回的原始数据:', payload);
 
-      try {
-        const res = await fetch(
-          `/api/projects/${projectId}/board?userId=${userId}`
-        );
-        const payload = await res.json();
+      const formattedColumns = (payload.columns || []).map((column) => {
+          const formattedColumn = formatColumn(column);
+          // 调试每个任务的时间数据
+          formattedColumn.tasks.forEach(task => {
+            console.log(`任务 "${task.title}" 的时间数据:`, {
+              dueDate: task.dueDate,
+              estimatedHours: task.estimatedHours,
+              actualHours: task.actualHours
+            });
+          });
+          return formattedColumn;
+        }).sort((a, b) => a.order - b.order);
 
-        if (!res.ok) {
-          throw new Error(payload.error || "加载看板失败");
-        }
-
-        const formattedColumns = (payload.columns || [])
-          .map((column) => formatColumn(column))
-          .sort((a, b) => a.order - b.order);
-
-        setStatuses(formattedColumns);
-      } catch (error) {
-        console.error("加载看板失败：", error);
-        setBoardError(error.message || "加载看板失败");
-        setStatuses([]);
-      } finally {
-        setLoadingBoard(false);
-      }
-    },
-    []
-  );
+      setStatuses(formattedColumns);
+    } catch (error) {
+      console.error("加载看板失败：", error);
+      setBoardError(error.message || "加载看板失败");
+      setStatuses([]);
+    } finally {
+      setLoadingBoard(false);
+    }
+  },
+  []
+);
 
   const fetchUserProjects = useCallback(
     async (userData, targetProjectId) => {
@@ -442,69 +455,74 @@ export default function ProjectBoard() {
   );
 
   // 处理时间保存
+  // 处理时间保存
   const handleTimeSave = async (updatedTask) => {
-    if (!user || !routeProjectId) {
-      throw new Error("用户未登录或项目不存在");
-    }
+  if (!user || !routeProjectId) {
+    throw new Error("用户未登录或项目不存在");
+  }
 
-    const updateData = {
-      userId: user.id,
-    };
-
-    if (updatedTask.dueDate !== undefined) {
-      updateData.dueDate = updatedTask.dueDate;
-    }
-    if (updatedTask.estimatedHours !== undefined) {
-      updateData.estimatedHours = updatedTask.estimatedHours;
-    }
-    if (updatedTask.actualHours !== undefined) {
-      updateData.actualHours = updatedTask.actualHours;
-    }
-
-    try {
-      const res = await fetch(
-        `/api/projects/${routeProjectId}/board/tasks/${updatedTask.numericId ?? updatedTask.id}`,
-        {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(updateData),
-        }
-      );
-
-      if (!res.ok) {
-        const errorText = await res.text();
-        throw new Error(`HTTP error! status: ${res.status}`);
-      }
-
-      const payload = await res.json();
-
-      // 更新本地状态
-      setStatuses((prev) =>
-        prev.map((status) =>
-          status.id === contextMenu.statusId
-            ? {
-                ...status,
-                tasks: status.tasks.map((item) =>
-                  item.id === updatedTask.id
-                    ? {
-                        ...item,
-                        dueDate: payload.dueDate,
-                        estimatedHours: payload.estimatedHours,
-                        actualHours: payload.actualHours,
-                      }
-                    : item
-                ),
-              }
-            : status
-        )
-      );
-
-      return payload;
-    } catch (error) {
-      console.error("更新时间失败:", error);
-      throw new Error("更新时间失败: " + error.message);
-    }
+  const updateData = {
+    userId: user.id,
   };
+
+  if (updatedTask.dueDate !== undefined) {
+    updateData.dueDate = updatedTask.dueDate;
+  }
+  if (updatedTask.estimatedHours !== undefined) {
+    updateData.estimatedHours = updatedTask.estimatedHours;
+  }
+  if (updatedTask.actualHours !== undefined) {
+    updateData.actualHours = updatedTask.actualHours;
+  }
+
+  console.log('发送的更新数据:', updateData);
+
+  try {
+    const res = await fetch(
+      `/api/projects/${routeProjectId}/board/tasks/${task.numericId ?? task.id}`,
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updateData),
+      }
+    );
+
+    if (!res.ok) {
+      const errorText = await res.text();
+      throw new Error(`HTTP error! status: ${res.status}`);
+    }
+
+    const payload = await res.json();
+    console.log('服务器返回的数据:', payload);
+
+    // 更新本地状态 - 使用 formatTask 确保数据格式一致
+    const formattedTask = formatTask(payload);
+
+    setStatuses((prev) =>
+      prev.map((status) =>
+        status.id === statusId
+          ? {...status,
+              tasks: status.tasks.map((item) =>
+                item.id === task.id
+                  ? {...item,
+                      dueDate: formattedTask.dueDate,
+                      estimatedHours: formattedTask.estimatedHours,
+                      actualHours: formattedTask.actualHours,
+                      updatedAt: formattedTask.updatedAt,
+                    }
+                  : item
+              ),
+            }
+          : status
+      )
+    );
+
+    return payload;
+  } catch (error) {
+    console.error("更新时间失败:", error);
+    throw new Error("更新时间失败: " + error.message);
+  }
+};
 
   const handleDragEnd = (event) => {
     const activeData = event.active.data.current;
