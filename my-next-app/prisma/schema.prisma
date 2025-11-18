@@ -28,6 +28,7 @@ model Project {
   members     User[]    @relation("ProjectMembers")
   boardColumns BoardColumn[]
   boardTasks   BoardTask[]
+  sprints      Sprint[]        // main 分支新增
 }
 
 model BoardColumn {
@@ -47,6 +48,8 @@ model BoardTask {
   projectId   Int
   column      BoardColumn? @relation(fields: [columnId], references: [id], onDelete: SetNull)
   columnId    Int?
+  sprint      Sprint?     @relation(fields: [sprintId], references: [id], onDelete: SetNull) // main 分支新增
+  sprintId    Int?                                              // main 分支新增
   title       String
   description String?
   tags        String[]    @default([])
@@ -58,4 +61,20 @@ model BoardTask {
   dueDate     DateTime?   // 截止时间
   estimatedHours Int?     // 预估工时（小时）
   actualHours Int?        // 实际工时（小时）
+  status      String      @default("未开始") // main 分支新增
+}
+
+model Sprint {
+  id          Int          @id @default(autoincrement())   // main 分支新增
+  project     Project      @relation(fields: [projectId], references: [id], onDelete: Cascade) // main 分支新增
+  projectId   Int          // main 分支新增
+  name        String       // main 分支新增
+  order       Int          // main 分支新增
+  startDate   DateTime?    // main 分支新增
+  endDate     DateTime?    // main 分支新增
+  status      String       @default("未开始") // main 分支新增
+  tasks       BoardTask[]  // main 分支新增
+
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
 }
