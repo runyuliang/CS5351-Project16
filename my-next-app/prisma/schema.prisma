@@ -70,11 +70,9 @@ model Sprint {
   projectId   Int
   name        String
   order       Int          // Sprint 顺序，从 1 开始
-  startDate   DateTime?
-  endDate     DateTime?
+  dueDate   DateTime? // 截止时间，可选
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   status      String       @default("未开始") // 新增状态字段: "未开始" | "正在冲刺" | "完成"
   tasks       BoardTask[]
-
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
 }
