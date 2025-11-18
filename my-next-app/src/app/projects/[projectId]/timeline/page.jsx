@@ -58,7 +58,7 @@ const TaskDetailModal = ({ task, onClose }) => {
               )}
             </div>
 
-            {task.tags.length > 0 && (
+            {task.tags && task.tags.length > 0 && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">标签</label>
                 <div className="flex flex-wrap gap-1">
@@ -97,9 +97,94 @@ const TaskDetailModal = ({ task, onClose }) => {
   );
 };
 
+// Sprint详情模态框组件
+const SprintDetailModal = ({ sprint, onClose }) => {
+  if (!sprint) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <div className="p-6">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-bold text-gray-800">Sprint 详情</h2>
+            <button 
+              onClick={onClose}
+              className="text-gray-500 hover:text-gray-700 text-2xl"
+            >
+              ×
+            </button>
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Sprint 名称</label>
+              <p className="text-lg font-semibold text-gray-900">{sprint.name}</p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              {sprint.dueDate && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">截止时间</label>
+                  <p className="text-gray-700">
+                    {new Date(sprint.dueDate).toLocaleString()}
+                  </p>
+                </div>
+              )}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">顺序</label>
+                <p className="text-gray-700">#{sprint.order}</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">状态</label>
+                <p className="text-gray-700">{sprint.status}</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">创建时间</label>
+                <p className="text-gray-700">
+                  {new Date(sprint.createdAt).toLocaleDateString()}
+                </p>
+              </div>
+            </div>
+
+            {sprint.tasks && sprint.tasks.length > 0 && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">包含任务 ({sprint.tasks.length})</label>
+                <div className="space-y-2 max-h-60 overflow-y-auto">
+                  {sprint.tasks.map(task => (
+                    <div key={task.id} className="bg-gray-50 p-3 rounded border">
+                      <p className="font-medium text-gray-900">{task.title}</p>
+                      <div className="flex justify-between items-center mt-1">
+                        <p className="text-sm text-gray-600">状态: {task.status}</p>
+                        {task.assignee && (
+                          <p className="text-sm text-gray-600">负责人: {task.assignee.name}</p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="flex justify-end gap-2 pt-4">
+              <button
+                onClick={onClose}
+                className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50 text-sm"
+              >
+                关闭
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // 日历视图组件
-// 日历视图组件 - 修复版本
-const CalendarView = ({ tasks, currentDate, onDateClick, onMonthChange, onTodayClick }) => {
+const CalendarView = ({ tasks, sprints, currentDate, onDateClick, onMonthChange, onTodayClick, onSprintClick }) => {
   const calendarData = useMemo(() => {
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
@@ -131,30 +216,30 @@ const CalendarView = ({ tasks, currentDate, onDateClick, onMonthChange, onTodayC
   return (
     <div className="bg-white rounded-lg border border-gray-200">
       <div className="flex justify-between items-center p-4 border-b border-gray-200">
-  <div className="flex items-center gap-4">
-    <button
-      onClick={() => onMonthChange('prev')}
-      className="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 text-sm text-gray-800"
-    >
-      上个月
-    </button>
-    <h3 className="text-lg font-semibold text-gray-800">
-      {year}年{month + 1}月
-    </h3>
-    <button
-      onClick={() => onMonthChange('next')}
-      className="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 text-sm text-gray-800"
-    >
-      下个月
-    </button>
-  </div>
-  <button
-    onClick={onTodayClick}
-    className="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 text-sm text-gray-800"
-  >
-    今天
-  </button>
-</div>
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => onMonthChange('prev')}
+            className="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 text-sm text-gray-800"
+          >
+            上个月
+          </button>
+          <h3 className="text-lg font-semibold text-gray-800">
+            {year}年{month + 1}月
+          </h3>
+          <button
+            onClick={() => onMonthChange('next')}
+            className="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 text-sm text-gray-800"
+          >
+            下个月
+          </button>
+        </div>
+        <button
+          onClick={onTodayClick}
+          className="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 text-sm text-gray-800"
+        >
+          今天
+        </button>
+      </div>
       <div className="grid grid-cols-7 border-b border-gray-200">
         {['日', '一', '二', '三', '四', '五', '六'].map(day => (
           <div key={day} className="p-3 text-center font-medium text-gray-700 border-r border-gray-200 last:border-r-0">
@@ -172,6 +257,9 @@ const CalendarView = ({ tasks, currentDate, onDateClick, onMonthChange, onTodayC
               const dayTasks = tasks.filter(task =>
                 task.dueDate && new Date(task.dueDate).toDateString() === date.toDateString()
               );
+              const daySprints = sprints.filter(sprint =>
+                sprint.dueDate && new Date(sprint.dueDate).toDateString() === date.toDateString()
+              );
 
               return (
                 <div
@@ -179,9 +267,9 @@ const CalendarView = ({ tasks, currentDate, onDateClick, onMonthChange, onTodayC
                   className={`min-h-[120px] p-2 border-r border-gray-200 last:border-r-0 cursor-pointer ${
                     !isCurrentMonth ? 'bg-gray-50' : 'bg-white'
                   } ${isToday ? 'bg-blue-50 border-2 border-blue-300' : ''} ${
-                    dayTasks.length > 0 ? 'hover:bg-gray-50' : ''
+                    (dayTasks.length > 0 || daySprints.length > 0) ? 'hover:bg-gray-50' : ''
                   }`}
-                  onClick={() => onDateClick(date, dayTasks)}
+                  onClick={() => onDateClick(date, [...dayTasks, ...daySprints])}
                 >
                   <div className={`text-sm mb-1 ${
                     isToday 
@@ -193,7 +281,20 @@ const CalendarView = ({ tasks, currentDate, onDateClick, onMonthChange, onTodayC
                     {date.getDate()}
                   </div>
                   <div className="space-y-1">
-                    {dayTasks.slice(0, 3).map(task => (
+                    {daySprints.slice(0, 2).map(sprint => (
+                      <div
+                        key={sprint.id}
+                        className="text-xs p-1 bg-green-100 text-green-800 rounded truncate font-semibold"
+                        title={`Sprint: ${sprint.name}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onSprintClick(sprint);
+                        }}
+                      >
+                        🚀 {sprint.name}
+                      </div>
+                    ))}
+                    {dayTasks.slice(0, 3 - daySprints.length).map(task => (
                       <div
                         key={task.id}
                         className="text-xs p-1 bg-blue-100 text-blue-800 rounded truncate"
@@ -202,9 +303,9 @@ const CalendarView = ({ tasks, currentDate, onDateClick, onMonthChange, onTodayC
                         {task.title}
                       </div>
                     ))}
-                    {dayTasks.length > 3 && (
+                    {(dayTasks.length + daySprints.length) > 3 && (
                       <div className="text-xs text-gray-600 font-medium">
-                        +{dayTasks.length - 3} 更多
+                        +{(dayTasks.length + daySprints.length) - 3} 更多
                       </div>
                     )}
                   </div>
@@ -218,9 +319,8 @@ const CalendarView = ({ tasks, currentDate, onDateClick, onMonthChange, onTodayC
   );
 };
 
-// 时间线视图组件 - 修复版本
-// 时间线视图组件 - 修复版本
-const TimelineView = ({ tasks, onTaskClick }) => {
+// 时间线视图组件
+const TimelineView = ({ tasks, sprints, onTaskClick, onSprintClick }) => {
   const [timeRange, setTimeRange] = useState('month');
   const [currentDate, setCurrentDate] = useState(new Date());
 
@@ -274,79 +374,86 @@ const TimelineView = ({ tasks, onTaskClick }) => {
     setCurrentDate(newDate);
   };
 
-  const getTaskPosition = (task) => {
-    if (!task.dueDate) return null;
+  const getItemPosition = (item) => {
+    if (!item.dueDate) return null;
 
-    const taskDate = new Date(task.dueDate);
-    const daysFromStart = Math.floor((taskDate - startDate) / (1000 * 60 * 60 * 24));
+    const itemDate = new Date(item.dueDate);
+    const daysFromStart = Math.floor((itemDate - startDate) / (1000 * 60 * 60 * 24));
     const totalDays = days.length;
 
     if (daysFromStart < 0 || daysFromStart >= totalDays) return null;
 
     return {
       left: `${(daysFromStart / totalDays) * 100}%`,
-      width: '100px'
+      width: item.type === 'sprint' ? '150px' : '100px'
     };
   };
 
-  const tasksByStatus = useMemo(() => {
+  // 合并任务和Sprint数据
+  const allItems = useMemo(() => {
+    const taskItems = tasks.map(task => ({ ...task, type: 'task' }));
+    const sprintItems = sprints.map(sprint => ({ ...sprint, type: 'sprint' }));
+    return [...taskItems, ...sprintItems];
+  }, [tasks, sprints]);
+
+  const itemsByStatus = useMemo(() => {
     const grouped = {};
-    tasks.forEach(task => {
-      const status = task.status || '未分类';
+    allItems.forEach(item => {
+      const status = item.status || '未分类';
       if (!grouped[status]) {
         grouped[status] = [];
       }
-      grouped[status].push(task);
+      grouped[status].push(item);
     });
     return grouped;
-  }, [tasks]);
+  }, [allItems]);
 
   return (
     <div className="bg-white rounded-lg border border-gray-200">
-<div className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 border-b border-gray-200 gap-4">
-  <div className="flex flex-wrap items-center gap-2">
-    <button
-      onClick={() => navigateTime('prev')}
-      className="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 text-sm text-gray-800"
-    >
-      上一{timeRange === 'week' ? '周' : timeRange === 'month' ? '月' : '季度'}
-    </button>
-    <h3 className="text-base font-semibold whitespace-nowrap text-gray-800">
-      {startDate.toLocaleDateString()} - {endDate.toLocaleDateString()}
-    </h3>
-    <button
-      onClick={() => navigateTime('next')}
-      className="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 text-sm text-gray-800"
-    >
-      下一{timeRange === 'week' ? '周' : timeRange === 'month' ? '月' : '季度'}
-    </button>
-  </div>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 border-b border-gray-200 gap-4">
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={() => navigateTime('prev')}
+            className="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 text-sm text-gray-800"
+          >
+            上一{timeRange === 'week' ? '周' : timeRange === 'month' ? '月' : '季度'}
+          </button>
+          <h3 className="text-base font-semibold whitespace-nowrap text-gray-800">
+            {startDate.toLocaleDateString()} - {endDate.toLocaleDateString()}
+          </h3>
+          <button
+            onClick={() => navigateTime('next')}
+            className="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 text-sm text-gray-800"
+          >
+            下一{timeRange === 'week' ? '周' : timeRange === 'month' ? '月' : '季度'}
+          </button>
+        </div>
 
-  <div className="flex gap-2">
-    <select
-      value={timeRange}
-      onChange={(e) => setTimeRange(e.target.value)}
-      className="px-3 py-1 border border-gray-300 rounded text-sm text-gray-800"
-    >
-      <option value="week">周视图</option>
-      <option value="month">月视图</option>
-      <option value="quarter">季度视图</option>
-    </select>
-    <button
-      onClick={() => setCurrentDate(new Date())}
-      className="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 text-sm whitespace-nowrap text-gray-800"
-    >
-      今天
-    </button>
-  </div>
-</div>
-      {/* 修复：添加正确的滚动容器和宽度限制 */}
+        <div className="flex gap-2">
+          <select
+            value={timeRange}
+            onChange={(e) => setTimeRange(e.target.value)}
+            className="px-3 py-1 border border-gray-300 rounded text-sm text-gray-800"
+          >
+            <option value="week">周视图</option>
+            <option value="month">月视图</option>
+            <option value="quarter">季度视图</option>
+          </select>
+          <button
+            onClick={() => setCurrentDate(new Date())}
+            className="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 text-sm whitespace-nowrap text-gray-800"
+          >
+            今天
+          </button>
+        </div>
+      </div>
+
       <div className="overflow-x-auto">
         <div className="min-w-full" style={{ width: 'max-content' }}>
           {/* 表头 */}
           <div className="flex border-b border-gray-200">
             <div className="w-40 flex-shrink-0 p-3 font-semibold border-r border-gray-200 bg-gray-50 text-gray-800">
-              任务
+              项目
             </div>
             <div className="flex">
               {days.map((date, index) => (
@@ -371,8 +478,8 @@ const TimelineView = ({ tasks, onTaskClick }) => {
             </div>
           </div>
 
-          {/* 任务行 */}
-          {Object.entries(tasksByStatus).map(([status, statusTasks]) => (
+          {/* 项目行 */}
+          {Object.entries(itemsByStatus).map(([status, statusItems]) => (
             <div key={status}>
               <div className="flex border-b border-gray-100 bg-gray-50">
                 <div className="w-40 flex-shrink-0 p-3 font-semibold border-r border-gray-200 text-gray-800">
@@ -381,27 +488,32 @@ const TimelineView = ({ tasks, onTaskClick }) => {
                 <div className="flex-1"></div>
               </div>
 
-              {statusTasks.map(task => {
-                const position = getTaskPosition(task);
+              {statusItems.map(item => {
+                const position = getItemPosition(item);
 
                 return (
                   <div
-                    key={task.id}
+                    key={`${item.type}-${item.id}`}
                     className="flex border-b border-gray-100 hover:bg-gray-50 cursor-pointer"
-                    onClick={() => onTaskClick(task)}
+                    onClick={() => item.type === 'sprint' ? onSprintClick(item) : onTaskClick(item)}
                   >
                     <div className="w-40 flex-shrink-0 p-3 border-r border-gray-200">
-                      <div className="font-semibold text-sm truncate text-gray-800" title={task.title}>
-                        {task.title}
+                      <div className="flex items-center gap-2">
+                        {item.type === 'sprint' && (
+                          <span className="text-green-600">🚀</span>
+                        )}
+                        <div className="font-semibold text-sm truncate text-gray-800" title={item.title || item.name}>
+                          {item.type === 'sprint' ? `Sprint: ${item.name}` : item.title}
+                        </div>
                       </div>
-                      {task.assignee && (
+                      {item.assignee && (
                         <div className="text-xs text-gray-600 mt-1 truncate">
-                          负责人: {task.assignee.name}
+                          负责人: {item.assignee.name}
                         </div>
                       )}
-                      {task.dueDate && (
+                      {item.dueDate && (
                         <div className="text-xs text-gray-600 truncate">
-                          截止: {new Date(task.dueDate).toLocaleDateString()}
+                          截止: {new Date(item.dueDate).toLocaleDateString()}
                         </div>
                       )}
                     </div>
@@ -409,15 +521,21 @@ const TimelineView = ({ tasks, onTaskClick }) => {
                     <div className="relative min-h-[60px]" style={{ width: `${days.length * 48}px` }}>
                       {position && (
                         <div
-                          className="absolute top-2 h-8 bg-blue-500 rounded-lg flex items-center justify-center text-white text-xs px-2 cursor-pointer hover:bg-blue-600 transition-colors"
+                          className={`absolute top-2 h-8 rounded-lg flex items-center justify-center text-white text-xs px-2 cursor-pointer transition-colors ${
+                            item.type === 'sprint' 
+                              ? 'bg-green-500 hover:bg-green-600 font-semibold' 
+                              : 'bg-blue-500 hover:bg-blue-600'
+                          }`}
                           style={{
                             left: position.left,
                             width: position.width,
                             maxWidth: position.width
                           }}
-                          title={`${task.title} - ${new Date(task.dueDate).toLocaleDateString()}`}
+                          title={`${item.type === 'sprint' ? `Sprint: ${item.name}` : item.title} - ${new Date(item.dueDate).toLocaleDateString()}`}
                         >
-                          <span className="truncate font-medium">{task.title}</span>
+                          <span className="truncate font-medium">
+                            {item.type === 'sprint' ? `🚀 ${item.name}` : item.title}
+                          </span>
                         </div>
                       )}
 
@@ -439,31 +557,39 @@ const TimelineView = ({ tasks, onTaskClick }) => {
             </div>
           ))}
 
-          {/* 未设置时间的任务 */}
-          {tasks.filter(task => !task.dueDate).length > 0 && (
+          {/* 未设置时间的项目 */}
+          {allItems.filter(item => !item.dueDate).length > 0 && (
             <div>
               <div className="flex border-b border-gray-100 bg-gray-50">
                 <div className="w-40 flex-shrink-0 p-3 font-semibold border-r border-gray-200 text-gray-800">
                   未设置时间
-                </div>                <div className="flex-1"></div>
+                </div>
+                <div className="flex-1"></div>
               </div>
-              {tasks.filter(task => !task.dueDate).map(task => (
+              {allItems.filter(item => !item.dueDate).map(item => (
                 <div
-                  key={task.id}
+                  key={`${item.type}-${item.id}`}
                   className="flex border-b border-gray-100 hover:bg-gray-50 cursor-pointer"
-                  onClick={() => onTaskClick(task)}
+                  onClick={() => item.type === 'sprint' ? onSprintClick(item) : onTaskClick(item)}
                 >
                   <div className="w-40 flex-shrink-0 p-3 border-r border-gray-200">
-                    <div className="font-semibold text-sm truncate text-gray-800">{task.title}</div>
-                    {task.assignee && (
+                    <div className="flex items-center gap-2">
+                      {item.type === 'sprint' && (
+                        <span className="text-green-600">🚀</span>
+                      )}
+                      <div className="font-semibold text-sm truncate text-gray-800">
+                        {item.type === 'sprint' ? `Sprint: ${item.name}` : item.title}
+                      </div>
+                    </div>
+                    {item.assignee && (
                       <div className="text-xs text-gray-600 mt-1 truncate">
-                        负责人: {task.assignee.name}
+                        负责人: {item.assignee.name}
                       </div>
                     )}
                     <div className="text-xs text-gray-500">未设置截止时间</div>
                   </div>
                   <div className="flex-1 p-3 text-gray-600 text-sm">
-                    请在任务详情中设置截止时间以在时间线中显示
+                    请在详情中设置截止时间以在时间线中显示
                   </div>
                 </div>
               ))}
@@ -476,29 +602,41 @@ const TimelineView = ({ tasks, onTaskClick }) => {
 };
 
 // 列表视图组件
-// 列表视图组件
-const ListView = ({ tasks, onTaskClick }) => {
+const ListView = ({ tasks, sprints, onTaskClick, onSprintClick }) => {
+  const allItems = useMemo(() => {
+    const taskItems = tasks.map(task => ({ ...task, type: 'task' }));
+    const sprintItems = sprints.map(sprint => ({ ...sprint, type: 'sprint' }));
+    return [...taskItems, ...sprintItems].sort((a, b) => new Date(a.dueDate || 0) - new Date(b.dueDate || 0));
+  }, [tasks, sprints]);
+
   return (
     <div className="bg-white rounded-lg border border-gray-200">
       <div className="p-4 border-b border-gray-200">
-        <h3 className="font-semibold text-gray-800">任务时间线</h3>
+        <h3 className="font-semibold text-gray-800">项目时间线</h3>
       </div>
       <div className="divide-y divide-gray-200">
-        {tasks.map(task => (
+        {allItems.map(item => (
           <div
-            key={task.id}
+            key={`${item.type}-${item.id}`}
             className="p-4 hover:bg-gray-50 cursor-pointer"
-            onClick={() => onTaskClick(task)}
+            onClick={() => item.type === 'sprint' ? onSprintClick(item) : onTaskClick(item)}
           >
             <div className="flex justify-between items-start">
               <div className="flex-1">
-                <h4 className="font-medium text-gray-900">{task.title}</h4>
-                {task.description && (
-                  <p className="text-sm text-gray-600 mt-1 line-clamp-2">{task.description}</p>
+                <div className="flex items-center gap-2">
+                  {item.type === 'sprint' && (
+                    <span className="text-green-600 text-lg">🚀</span>
+                  )}
+                  <h4 className="font-medium text-gray-900">
+                    {item.type === 'sprint' ? `Sprint: ${item.name}` : item.title}
+                  </h4>
+                </div>
+                {item.description && (
+                  <p className="text-sm text-gray-600 mt-1 line-clamp-2">{item.description}</p>
                 )}
-                {task.tags.length > 0 && (
+                {item.tags && item.tags.length > 0 && (
                   <div className="flex gap-1 mt-2">
-                    {task.tags.map(tag => (
+                    {item.tags.map(tag => (
                       <span key={tag} className="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded">
                         {tag}
                       </span>
@@ -507,25 +645,30 @@ const ListView = ({ tasks, onTaskClick }) => {
                 )}
               </div>
               <div className="text-right text-sm">
-                {task.dueDate ? (
+                {item.dueDate ? (
                   <div className={`px-2 py-1 rounded ${
-                    new Date(task.dueDate) < new Date() 
+                    new Date(item.dueDate) < new Date() 
                       ? 'bg-red-100 text-red-800' 
-                      : 'bg-green-100 text-green-800'
+                      : item.type === 'sprint'
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-blue-100 text-blue-800'
                   }`}>
-                    截止: {new Date(task.dueDate).toLocaleDateString()}
+                    截止: {new Date(item.dueDate).toLocaleDateString()}
                   </div>
                 ) : (
                   <div className="text-gray-500">未设置时间</div>
                 )}
-                {task.estimatedHours && (
-                  <div className="text-gray-600 mt-1">预估: {task.estimatedHours}h</div>
+                {item.estimatedHours && (
+                  <div className="text-gray-600 mt-1">预估: {item.estimatedHours}h</div>
                 )}
               </div>
             </div>
             <div className="flex justify-between items-center mt-2 text-xs text-gray-500">
-              <span>状态: {task.status}</span>
-              <span>负责人: {task.assignee?.name || '未分配'}</span>
+              <span>类型: {item.type === 'sprint' ? 'Sprint' : '任务'}</span>
+              <span>状态: {item.status}</span>
+              {item.type === 'task' && (
+                <span>负责人: {item.assignee?.name || '未分配'}</span>
+              )}
             </div>
           </div>
         ))}
@@ -534,15 +677,15 @@ const ListView = ({ tasks, onTaskClick }) => {
   );
 };
 
-// 日期任务列表组件
-const DayTasksList = ({ date, tasks, onClose, onTaskClick }) => {
-  if (tasks.length === 0) return null;
+// 日期项目列表组件
+const DayItemsList = ({ date, items, onClose, onTaskClick, onSprintClick }) => {
+  if (items.length === 0) return null;
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-4">
       <div className="flex justify-between items-center mb-4">
         <h3 className="font-semibold">
-          {new Date(date).toLocaleDateString()} 的任务 ({tasks.length}个)
+          {new Date(date).toLocaleDateString()} 的项目 ({items.length}个)
         </h3>
         <button
           onClick={onClose}
@@ -552,19 +695,33 @@ const DayTasksList = ({ date, tasks, onClose, onTaskClick }) => {
         </button>
       </div>
       <div className="space-y-2">
-        {tasks.map(task => (
+        {items.map(item => (
           <div
-            key={task.id}
+            key={`${item.type}-${item.id}`}
             className="p-3 border border-gray-200 rounded hover:bg-gray-50 cursor-pointer"
-            onClick={() => onTaskClick(task)}
+            onClick={() => item.type === 'sprint' ? onSprintClick(item) : onTaskClick(item)}
           >
             <div className="flex justify-between items-center">
-              <span className="font-medium">{task.title}</span>
-              <span className="text-sm text-gray-500">{task.status}</span>
+              <div className="flex items-center gap-2">
+                {item.type === 'sprint' && (
+                  <span className="text-green-600">🚀</span>
+                )}
+                <span className="font-medium">
+                  {item.type === 'sprint' ? `Sprint: ${item.name}` : item.title}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-500">{item.status}</span>
+                <span className={`text-xs px-2 py-1 rounded ${
+                  item.type === 'sprint' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'
+                }`}>
+                  {item.type === 'sprint' ? 'Sprint' : '任务'}
+                </span>
+              </div>
             </div>
-            {task.assignee && (
+            {item.assignee && (
               <div className="text-sm text-gray-600 mt-1">
-                负责人: {task.assignee.name}
+                负责人: {item.assignee.name}
               </div>
             )}
           </div>
@@ -575,21 +732,26 @@ const DayTasksList = ({ date, tasks, onClose, onTaskClick }) => {
 };
 
 // 主时间线视图组件
-const EnhancedTimelineView = ({ tasks }) => {
+const EnhancedTimelineView = ({ tasks, sprints }) => {
   const [currentView, setCurrentView] = useState('timeline');
   const [selectedTask, setSelectedTask] = useState(null);
+  const [selectedSprint, setSelectedSprint] = useState(null);
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [selectedDayTasks, setSelectedDayTasks] = useState([]);
+  const [selectedDayItems, setSelectedDayItems] = useState([]);
   const [selectedDate, setSelectedDate] = useState(null);
 
   const handleTaskClick = (task) => {
     setSelectedTask(task);
   };
 
-  const handleDateClick = (date, dayTasks) => {
-    if (dayTasks.length > 0) {
+  const handleSprintClick = (sprint) => {
+    setSelectedSprint(sprint);
+  };
+
+  const handleDateClick = (date, dayItems) => {
+    if (dayItems.length > 0) {
       setSelectedDate(date);
-      setSelectedDayTasks(dayTasks);
+      setSelectedDayItems(dayItems);
     }
   };
 
@@ -607,16 +769,22 @@ const EnhancedTimelineView = ({ tasks }) => {
     setCurrentDate(new Date());
   };
 
-  const handleCloseDayTasks = () => {
-    setSelectedDayTasks([]);
+  const handleCloseDayItems = () => {
+    setSelectedDayItems([]);
     setSelectedDate(null);
   };
 
-  if (tasks.length === 0) {
+  const allItems = useMemo(() => {
+    const taskItems = tasks.map(task => ({ ...task, type: 'task' }));
+    const sprintItems = sprints.map(sprint => ({ ...sprint, type: 'sprint' }));
+    return [...taskItems, ...sprintItems];
+  }, [tasks, sprints]);
+
+  if (allItems.length === 0) {
     return (
       <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
-        <p className="text-gray-500">暂无任务数据</p>
-        <p className="text-sm text-gray-400 mt-2">请在看板页面创建任务并设置截止时间</p>
+        <p className="text-gray-500">暂无项目数据</p>
+        <p className="text-sm text-gray-400 mt-2">请在项目页面创建任务或Sprint并设置截止时间</p>
       </div>
     );
   }
@@ -658,37 +826,48 @@ const EnhancedTimelineView = ({ tasks }) => {
         </div>
 
         <div className="text-sm text-gray-600">
-          显示 {tasks.filter(t => t.dueDate).length}/{tasks.length} 个有时间设置的任务
+          显示 {allItems.filter(t => t.dueDate).length}/{allItems.length} 个有时间设置的项目
+          (任务: {tasks.filter(t => t.dueDate).length}, Sprint: {sprints.filter(s => s.dueDate).length})
         </div>
       </div>
 
-      {selectedDayTasks.length > 0 && (
-        <DayTasksList
+      {selectedDayItems.length > 0 && (
+        <DayItemsList
           date={selectedDate}
-          tasks={selectedDayTasks}
-          onClose={handleCloseDayTasks}
+          items={selectedDayItems}
+          onClose={handleCloseDayItems}
           onTaskClick={handleTaskClick}
+          onSprintClick={handleSprintClick}
         />
       )}
 
       {currentView === 'list' && (
-        <ListView tasks={tasks} onTaskClick={handleTaskClick} />
+        <ListView 
+          tasks={tasks} 
+          sprints={sprints} 
+          onTaskClick={handleTaskClick}
+          onSprintClick={handleSprintClick}
+        />
       )}
 
       {currentView === 'calendar' && (
         <CalendarView
           tasks={tasks}
+          sprints={sprints}
           currentDate={currentDate}
           onDateClick={handleDateClick}
           onMonthChange={navigateMonth}
           onTodayClick={handleTodayClick}
+          onSprintClick={handleSprintClick}
         />
       )}
 
       {currentView === 'timeline' && (
         <TimelineView
           tasks={tasks}
+          sprints={sprints}
           onTaskClick={handleTaskClick}
+          onSprintClick={handleSprintClick}
         />
       )}
 
@@ -696,6 +875,13 @@ const EnhancedTimelineView = ({ tasks }) => {
         <TaskDetailModal
           task={selectedTask}
           onClose={() => setSelectedTask(null)}
+        />
+      )}
+
+      {selectedSprint && (
+        <SprintDetailModal
+          sprint={selectedSprint}
+          onClose={() => setSelectedSprint(null)}
         />
       )}
     </div>
@@ -711,6 +897,7 @@ export default function TimelinePage() {
   const [allProjects, setAllProjects] = useState([]);
   const [currentProject, setCurrentProject] = useState(null);
   const [tasks, setTasks] = useState([]);
+  const [sprints, setSprints] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -751,20 +938,33 @@ export default function TimelinePage() {
     setError("");
 
     try {
-      const res = await fetch(`/api/projects/${projectId}/timeline?userId=${userId}`);
+      // Get the data of tasks and sprints in parallel
+      const [tasksRes, sprintsRes] = await Promise.all([
+        fetch(`/api/projects/${projectId}/timeline?userId=${userId}`),
+        fetch(`/api/projects/${projectId}/sprint?userId=${userId}`)
+      ]);
 
-      if (!res.ok) {
-        const errorText = await res.text();
-        throw new Error(`API Error: ${res.status} - ${errorText}`);
+      if (!tasksRes.ok) {
+        const errorText = await tasksRes.text();
+        throw new Error(`Tasks API Error: ${tasksRes.status} - ${errorText}`);
       }
 
-      const payload = await res.json();
-      setTasks(payload.tasks || []);
+      if (!sprintsRes.ok) {
+        const errorText = await sprintsRes.text();
+        throw new Error(`Sprints API Error: ${sprintsRes.status} - ${errorText}`);
+      }
+
+      const tasksData = await tasksRes.json();
+      const sprintsData = await sprintsRes.json();
+
+      setTasks(tasksData.tasks || []);
+      setSprints(sprintsData.sprints || []);
 
     } catch (error) {
-      console.error("加载时间线数据失败：", error);
-      setError(error.message || "加载时间线数据失败");
+      console.error("load：", error);
+      setError(error.message || "load fialed");
       setTasks([]);
+      setSprints([]);
     } finally {
       setLoading(false);
     }
@@ -801,8 +1001,8 @@ export default function TimelinePage() {
           currentProjectId={projectId}
         />
         <div className="flex-1 p-6">
-          <div className="text-gray-500">加载时间线数据中...</div>
-          <div className="text-sm text-gray-400 mt-2">正在获取项目任务数据</div>
+          <div className="text-gray-500">loading...</div>
+          <div className="text-sm text-gray-400 mt-2">fetching data</div>
         </div>
       </div>
     );
@@ -817,7 +1017,7 @@ export default function TimelinePage() {
         />
         <div className="flex-1 p-6">
           <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-            <h3 className="text-red-800 font-medium">加载失败</h3>
+            <h3 className="text-red-800 font-medium">loading fail</h3>
             <p className="text-red-600 text-sm mt-1">{error}</p>
             <div className="mt-4 flex gap-2">
               <button
@@ -839,6 +1039,10 @@ export default function TimelinePage() {
     );
   }
 
+  const allItems = [...tasks, ...sprints];
+  const itemsWithDueDate = [...tasks.filter(t => t.dueDate), ...sprints.filter(s => s.dueDate)];
+  const overdueItems = [...tasks.filter(t => t.dueDate && new Date(t.dueDate) < new Date()), ...sprints.filter(s => s.dueDate && new Date(s.dueDate) < new Date())];
+
   return (
     <div className="flex min-h-screen">
       <ProjectSidebar
@@ -852,41 +1056,51 @@ export default function TimelinePage() {
               ← 返回看板
             </button>
           </Link>
-          <h1 className="text-2xl font-bold text-gray-300 mb-2">
+          <h1 className="text-2xl font-bold text-gray-800 mb-2">
             {currentProject?.name || '项目'} - 时间线
           </h1>
-          <p className="text-gray-300">
-            查看任务的时间分布和截止日期
+          <p className="text-gray-600">
+            查看任务和Sprint的时间分布和截止日期
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
           <div className="bg-white p-4 rounded-lg border border-gray-200">
-            <div className="text-2xl font-bold text-blue-600">{tasks.length}</div>
-            <div className="text-sm text-gray-600">总任务数</div>
+            <div className="text-2xl font-bold text-blue-600">{allItems.length}</div>
+            <div className="text-sm text-gray-600">总项目数</div>
+            <div className="text-xs text-gray-500 mt-1">
+              任务: {tasks.length} | Sprint: {sprints.length}
+            </div>
           </div>
           <div className="bg-white p-4 rounded-lg border border-gray-200">
             <div className="text-2xl font-bold text-green-600">
-              {tasks.filter(task => task.dueDate).length}
+              {itemsWithDueDate.length}
             </div>
             <div className="text-sm text-gray-600">已设置截止时间</div>
+            <div className="text-xs text-gray-500 mt-1">
+              任务: {tasks.filter(t => t.dueDate).length} | Sprint: {sprints.filter(s => s.dueDate).length}
+            </div>
           </div>
           <div className="bg-white p-4 rounded-lg border border-gray-200">
             <div className="text-2xl font-bold text-orange-600">
-              {tasks.filter(task => task.dueDate && new Date(task.dueDate) < new Date()).length}
+              {overdueItems.length}
             </div>
-            <div className="text-sm text-gray-600">已过期任务</div>
+            <div className="text-sm text-gray-600">已过期项目</div>
+            <div className="text-xs text-gray-500 mt-1">
+              任务: {tasks.filter(t => t.dueDate && new Date(t.dueDate) < new Date()).length} | Sprint: {sprints.filter(s => s.dueDate && new Date(s.dueDate) < new Date()).length}
+            </div>
           </div>
           <div className="bg-white p-4 rounded-lg border border-gray-200">
             <div className="text-2xl font-bold text-purple-600">
               {tasks.reduce((sum, task) => sum + (task.estimatedHours || 0), 0)}
             </div>
             <div className="text-sm text-gray-600">总预估工时</div>
+            <div className="text-xs text-gray-500 mt-1">仅任务统计</div>
           </div>
         </div>
 
         <div className="overflow-hidden">
-          <EnhancedTimelineView tasks={tasks} />
+          <EnhancedTimelineView tasks={tasks} sprints={sprints} />
         </div>
       </div>
     </div>
