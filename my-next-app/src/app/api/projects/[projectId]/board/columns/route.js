@@ -52,3 +52,36 @@ export async function POST(req, context) {
   }
 }
 
+export async function GET(req, context) {
+  try {
+    const params = await context.params;
+    const projectId = Number(params.projectId);
+    const userId = Number(req.nextUrl.searchParams.get("userId"));
+
+
+    if (!userId) {
+      return NextResponse.json({ error: "Missing userId" }, { status: 400 });
+    }
+
+    const access = await getProjectWithAccess(projectId, userId);
+    if (access.error) {
+      return NextResponse.json({ error: access.error }, { status: access.status });
+    }
+
+    const columns = await prisma.boardColumn.findMany({
+      where: { projectId },
+      orderBy: { order: "asc" },
+      include: {
+        tasks: {
+          orderBy: { position: "asc" }
+        }
+      }
+    });
+    console.log("Fetched columns:", columns);
+
+    return NextResponse.json(columns, { status: 200 });
+  } catch (error) {
+    console.error("GET board columns error:", error);
+    return NextResponse.json({ error: "Failed to fetch columns" }, { status: 500 });
+  }
+}

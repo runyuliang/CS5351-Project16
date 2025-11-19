@@ -75,6 +75,13 @@ export default function SprintPageClient() {
   const [modalOpen, setModalOpen] = useState(false);
   const [currentTask, setCurrentTask] = useState(null);
 
+  const STATUS_TO_ORDER = {
+    "未开始": 1,
+    "进行中": 2,
+    "审核中": 3,
+    "完成": 4,
+  };
+
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
@@ -131,17 +138,53 @@ export default function SprintPageClient() {
 
   const handleStatusSave = async () => {
     if (!currentTask) return;
+  
+    const newOrder = STATUS_TO_ORDER[currentTask.status];
+  
+    // 1. 根据状态找到 column slug
+    const columnSlug = STATUS_TO_ORDER[newOrder];
+  
+    // 2. 找到该 column 的 columnId
+    const resColumns = await fetch(`/api/projects/${pid}/board/columns?userId=1`);
+    const allColumns = await resColumns.json();
+    
+    console.log(newOrder)
+    console.log(currentTask.id)
+    
+  
     try {
+      // 更新任务 status 本身
       const res = await fetch(`/api/projects/${pid}/board/tasks/${currentTask.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId: 1, status: currentTask.status }),
       });
-      if (!res.ok) throw new Error('更新失败');
+  
+      if (!res.ok) throw new Error("状态更新失败");
+  
+      // 调 reorder API，放到该 column 最底部
+      await fetch(`/api/projects/${pid}/board/tasks/reorder`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: 1,
+          updates: [
+            {
+              columnId: newOrder,
+              taskIds: [Number(currentTask.id)], // 放该 column 最底部
+            },
+          ],
+        }),
+      });
+  
       await fetchData();
       setModalOpen(false);
       setCurrentTask(null);
-    } catch (err) { console.error(err); alert('修改状态失败'); }
+  
+    } catch (err) {
+      console.error(err);
+      alert("修改状态失败");
+    }
   };
 
   const handleCreateSprint = async () => {
@@ -173,6 +216,8 @@ export default function SprintPageClient() {
       await fetchData();
     } catch (err) { console.error(err); alert('更新 Sprint 状态失败'); }
   };
+
+  
 
   return (
     <div className="flex h-screen p-6 bg-gray-100">
@@ -214,7 +259,27 @@ export default function SprintPageClient() {
         </DragOverlay>
       </DndContext>
 
-      {/* Modal 略，和你原来的代码一致 */}
+      {modalOpen && currentTask && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
+          <div className="bg-white p-4 rounded shadow w-80">
+            <h3 className="font-semibold mb-2">修改任务状态</h3>
+            <select
+              value={currentTask.status || '未开始'}
+              onChange={(e) => setCurrentTask({ ...currentTask, status: e.target.value })}
+              className="w-full border rounded px-2 py-1 mb-4"
+            >
+              <option value="未开始">To do</option>
+              <option value="进行中">In Progress</option>
+              <option value="审核中">In Review</option>
+              <option value="完成">Done</option>
+            </select>
+            <div className="flex justify-end space-x-2">
+              <button className="px-3 py-1 bg-gray-300 rounded" onClick={() => setModalOpen(false)}>取消</button>
+              <button className="px-3 py-1 bg-blue-500 text-white rounded" onClick={handleStatusSave}>保存</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

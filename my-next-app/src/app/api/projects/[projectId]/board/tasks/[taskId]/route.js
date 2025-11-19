@@ -4,7 +4,7 @@ import { getProjectWithAccess } from "@/lib/projectAccess";
 
 export async function PATCH(req, context) {
   try {
-    const { params } = context;           // ✅ 正确获取 params
+    const params = await context.params;   // ✅ 正确获取 params
     const projectId = Number(params.projectId);
     const taskId = Number(params.taskId);
 
@@ -85,7 +85,7 @@ export async function PATCH(req, context) {
     if (typeof actualHours !== "undefined") data.actualHours = actualHours !== null && actualHours !== '' ? Number(actualHours) : null;
 
     // ===== status 更新 =====
-    if (typeof status === "string" && ["未开始","进行中","完成"].includes(status)) {
+    if (typeof status === "string" && ["未开始","进行中","审核中","完成"].includes(status)) {
       data.status = status;
     }
 
