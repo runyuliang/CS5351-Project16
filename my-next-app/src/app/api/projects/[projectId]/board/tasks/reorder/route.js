@@ -14,6 +14,7 @@ export async function POST(req, context) {
         { status: 400 }
       );
     }
+    
 
     const access = await getProjectWithAccess(projectId, Number(userId));
     if (access.error) {
@@ -27,7 +28,7 @@ export async function POST(req, context) {
       where: { projectId, id: { in: uniqueColumnIds } },
       select: { id: true },
     });
-
+    
     if (columns.length !== uniqueColumnIds.length) {
       return NextResponse.json(
         { error: "One or more columns do not belong to this project" },
