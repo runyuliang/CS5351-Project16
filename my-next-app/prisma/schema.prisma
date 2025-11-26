@@ -61,6 +61,7 @@ model BoardTask {
   dueDate     DateTime?   // 截止时间
   estimatedHours Int?     // 预估工时（小时）
   actualHours Int?        // 实际工时（小时）
+  status      String      @default("未开始")
 }
 
 model Sprint {

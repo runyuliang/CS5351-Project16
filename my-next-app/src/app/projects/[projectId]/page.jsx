@@ -38,8 +38,8 @@ const formatTask = (task) => {
     position: typeof task.position === "number" ? task.position : 0,
     createdAt,
     updatedAt: task.updatedAt,
-    // 确保时间字段被正确处理
-    dueDate: task.dueDate || task.due_date || null,  // 支持两种字段名
+    // Ensure date fields are handled correctly
+    dueDate: task.dueDate || task.due_date || null,  // Support both field names
     estimatedHours: task.estimatedHours || task.estimated_hours || null,
     actualHours: task.actualHours || task.actual_hours || null,
     assignee: task.assignee
@@ -48,7 +48,7 @@ const formatTask = (task) => {
           name:
             task.assignee.name ||
             task.assignee.email ||
-            `用户${task.assignee.id}`,
+            `User${task.assignee.id}`,
           email: task.assignee.email || "",
         }
       : null,
@@ -65,7 +65,7 @@ const formatColumn = (column) => ({
     : [],
 });
 
-// 时间编辑模态框组件
+// Time Edit Modal Component
 const TimeEditModal = ({ task, onSave, onClose }) => {
   const [formData, setFormData] = useState({
     dueDate: task.dueDate ? new Date(task.dueDate).toISOString().slice(0, 16) : '',
@@ -92,8 +92,8 @@ const TimeEditModal = ({ task, onSave, onClose }) => {
       await onSave(updatedTask);
       onClose();
     } catch (error) {
-      console.error("保存时间设置失败:", error);
-      alert("保存失败，请重试");
+      console.error("Failed to save time settings:", error);
+      alert("Save failed, please try again");
     }
   };
 
@@ -109,7 +109,7 @@ const TimeEditModal = ({ task, onSave, onClose }) => {
       <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
         <div className="p-6">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-bold text-gray-800">设置时间</h2>
+            <h2 className="text-xl font-bold text-gray-800">Set Time</h2>
             <button
               onClick={onClose}
               className="text-gray-500 hover:text-gray-700 text-2xl"
@@ -119,11 +119,11 @@ const TimeEditModal = ({ task, onSave, onClose }) => {
           </div>
 
           <div className="space-y-4">
-            {/* 截止时间 */}
+            {/* Due Date */}
             <div>
               <div className="flex justify-between items-center mb-1">
                 <label className="block text-sm font-medium text-gray-700">
-                  截止时间
+                  Due Date
                 </label>
                 {formData.dueDate && (
                   <button
@@ -131,7 +131,7 @@ const TimeEditModal = ({ task, onSave, onClose }) => {
                     onClick={() => handleClear('dueDate')}
                     className="text-xs text-red-500 hover:text-red-700"
                   >
-                    清除
+                    Clear
                   </button>
                 )}
               </div>
@@ -144,11 +144,11 @@ const TimeEditModal = ({ task, onSave, onClose }) => {
               />
             </div>
 
-            {/* 预估工时 */}
+            {/* Estimated Hours */}
             <div>
               <div className="flex justify-between items-center mb-1">
                 <label className="block text-sm font-medium text-gray-700">
-                  预估工时 (小时)
+                  Estimated Hours
                 </label>
                 {formData.estimatedHours && (
                   <button
@@ -156,7 +156,7 @@ const TimeEditModal = ({ task, onSave, onClose }) => {
                     onClick={() => handleClear('estimatedHours')}
                     className="text-xs text-red-500 hover:text-red-700"
                   >
-                    清除
+                    Clear
                   </button>
                 )}
               </div>
@@ -167,16 +167,16 @@ const TimeEditModal = ({ task, onSave, onClose }) => {
                 step="0.5"
                 value={formData.estimatedHours}
                 onChange={handleChange}
-                placeholder="输入预估工时"
+                placeholder="Enter estimated hours"
                 className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
 
-            {/* 实际工时 */}
+            {/* Actual Hours */}
             <div>
               <div className="flex justify-between items-center mb-1">
                 <label className="block text-sm font-medium text-gray-700">
-                  实际工时 (小时)
+                  Actual Hours
                 </label>
                 {formData.actualHours && (
                   <button
@@ -184,7 +184,7 @@ const TimeEditModal = ({ task, onSave, onClose }) => {
                     onClick={() => handleClear('actualHours')}
                     className="text-xs text-red-500 hover:text-red-700"
                   >
-                    清除
+                    Clear
                   </button>
                 )}
               </div>
@@ -195,7 +195,7 @@ const TimeEditModal = ({ task, onSave, onClose }) => {
                 step="0.5"
                 value={formData.actualHours}
                 onChange={handleChange}
-                placeholder="输入实际工时"
+                placeholder="Enter actual hours"
                 className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
@@ -206,13 +206,13 @@ const TimeEditModal = ({ task, onSave, onClose }) => {
               onClick={onClose}
               className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
             >
-              取消
+              Cancel
             </button>
             <button
               onClick={handleSave}
               className="px-4 py-2 bg-blue-600 border border-transparent rounded-md text-sm font-medium text-white hover:bg-blue-700"
             >
-              保存
+              Save
             </button>
           </div>
         </div>
@@ -259,17 +259,17 @@ export default function ProjectBoard() {
       const payload = await res.json();
 
       if (!res.ok) {
-        throw new Error(payload.error || "加载看板失败");
+        throw new Error(payload.error || "Failed to load board");
       }
 
-      // 添加调试日志
-      console.log('API返回的原始数据:', payload);
+      // Add debug log
+      console.log('Raw API data:', payload);
 
       const formattedColumns = (payload.columns || []).map((column) => {
           const formattedColumn = formatColumn(column);
-          // 调试每个任务的时间数据
+          // Debug time data for each task
           formattedColumn.tasks.forEach(task => {
-            console.log(`任务 "${task.title}" 的时间数据:`, {
+            console.log(`Task "${task.title}" time data:`, {
               dueDate: task.dueDate,
               estimatedHours: task.estimatedHours,
               actualHours: task.actualHours
@@ -280,8 +280,8 @@ export default function ProjectBoard() {
 
       setStatuses(formattedColumns);
     } catch (error) {
-      console.error("加载看板失败：", error);
-      setBoardError(error.message || "加载看板失败");
+      console.error("Failed to load board:", error);
+      setBoardError(error.message || "Failed to load board");
       setStatuses([]);
     } finally {
       setLoadingBoard(false);
@@ -304,7 +304,7 @@ export default function ProjectBoard() {
         const payload = await res.json();
 
         if (!res.ok) {
-          throw new Error(payload.error || "获取项目失败");
+          throw new Error(payload.error || "Failed to fetch projects");
         }
 
         const projects = (payload.projects || []).map((proj) => ({
@@ -335,12 +335,12 @@ export default function ProjectBoard() {
           setLoadingBoard(false);
         }
       } catch (error) {
-        console.error("获取项目失败：", error);
+        console.error("Failed to fetch projects:", error);
         setAllProjects([]);
         setCurrentProject(null);
         setUsers([userData]);
         setStatuses([]);
-        setBoardError(error.message || "无法获取项目");
+        setBoardError(error.message || "Unable to fetch projects");
         setLoadingBoard(false);
       } finally {
         setLoadingProjects(false);
@@ -360,7 +360,7 @@ export default function ProjectBoard() {
       const parsed = JSON.parse(storedUser);
       setUser(parsed);
     } catch (error) {
-      console.error("解析用户信息失败：", error);
+      console.error("Failed to parse user data:", error);
       router.push("/login");
     }
   }, [router]);
@@ -411,11 +411,11 @@ export default function ProjectBoard() {
         const payload = await res.json();
 
         if (!res.ok) {
-          throw new Error(payload.error || "任务排序更新失败");
+          throw new Error(payload.error || "Failed to update task order");
         }
       } catch (error) {
-        console.error("任务排序更新失败：", error);
-        alert(error.message || "任务排序更新失败");
+        console.error("Failed to update task order:", error);
+        alert(error.message || "Failed to update task order");
         if (user && projectIdNumber) {
           await fetchBoardData(projectIdNumber, user.id);
         }
@@ -427,7 +427,7 @@ export default function ProjectBoard() {
   const persistAssignee = useCallback(
     async (taskId, assigneeId) => {
       if (!user || !routeProjectId) {
-        throw new Error("用户未登录或项目不存在");
+        throw new Error("User not logged in or project does not exist");
       }
 
       const res = await fetch(
@@ -446,7 +446,7 @@ export default function ProjectBoard() {
       const payload = await res.json();
 
       if (!res.ok) {
-        throw new Error(payload.error || "更新任务失败");
+        throw new Error(payload.error || "Failed to update task");
       }
 
       return payload;
@@ -454,11 +454,10 @@ export default function ProjectBoard() {
     [user, routeProjectId]
   );
 
-  // 处理时间保存
-  // 处理时间保存
+  // Handle time save
   const handleTimeSave = async (updatedTask) => {
   if (!user || !routeProjectId) {
-    throw new Error("用户未登录或项目不存在");
+    throw new Error("User not logged in or project does not exist");
   }
 
   const updateData = {
@@ -475,7 +474,7 @@ export default function ProjectBoard() {
     updateData.actualHours = updatedTask.actualHours;
   }
 
-  console.log('发送的更新数据:', updateData);
+  console.log('Update data being sent:', updateData);
 
   try {
     const res = await fetch(
@@ -493,9 +492,9 @@ export default function ProjectBoard() {
     }
 
     const payload = await res.json();
-    console.log('服务器返回的数据:', payload);
+    console.log('Data returned from server:', payload);
 
-    // 更新本地状态 - 使用 formatTask 确保数据格式一致
+    // Update local state - use formatTask to ensure consistent data format
     const formattedTask = formatTask(payload);
 
     setStatuses((prev) =>
@@ -519,8 +518,8 @@ export default function ProjectBoard() {
 
     return payload;
   } catch (error) {
-    console.error("更新时间失败:", error);
-    throw new Error("更新时间失败: " + error.message);
+    console.error("Failed to update time:", error);
+    throw new Error("Failed to update time: " + error.message);
   }
 };
 
@@ -534,12 +533,12 @@ export default function ProjectBoard() {
       return;
     }
 
-    // 计算拖拽距离
+    // Calculate drag distance
     const dragDistance = Math.sqrt(
       Math.pow(event.delta.x, 2) + Math.pow(event.delta.y, 2)
     );
 
-    // 如果拖拽距离小于阈值90
+    // If drag distance is less than threshold (90)
     if (dragDistance < 90) {
       setActiveTask(null);
       setActiveStatusId("");
@@ -646,7 +645,7 @@ export default function ProjectBoard() {
 
   const createStatus = async () => {
     if (!newStatusName.trim()) {
-      alert("请输入状态列名称！");
+      alert("Please enter a status column name!");
       return;
     }
     if (!user || !routeProjectId) return;
@@ -666,7 +665,7 @@ export default function ProjectBoard() {
       const payload = await res.json();
 
       if (!res.ok) {
-        throw new Error(payload.error || "创建状态列失败");
+        throw new Error(payload.error || "Failed to create status column");
       }
 
       const formatted = {
@@ -682,14 +681,14 @@ export default function ProjectBoard() {
       );
       setNewStatusName("");
     } catch (error) {
-      console.error("创建状态列失败：", error);
-      alert(error.message || "创建状态列失败");
+      console.error("Failed to create status column:", error);
+      alert(error.message || "Failed to create status column");
     }
   };
 
   const createTask = async () => {
     if (!newTask.title.trim()) {
-      alert("请输入任务标题！");
+      alert("Please enter a task title!");
       return;
     }
     if (!user || !routeProjectId) return;
@@ -699,7 +698,7 @@ export default function ProjectBoard() {
     );
 
     if (!targetStatus) {
-      alert("请选择有效的状态列");
+      alert("Please select a valid status column");
       return;
     }
 
@@ -753,8 +752,8 @@ export default function ProjectBoard() {
         statusId: targetStatus.id,
       });
     } catch (error) {
-      console.error("创建任务失败：", error);
-      alert(error.message || "创建任务失败");
+      console.error("Failed to create task:", error);
+      alert(error.message || "Failed to create task");
     }
   };
 
@@ -787,12 +786,12 @@ export default function ProjectBoard() {
           {(task.dueDate || task.estimatedHours || task.actualHours) && (
             <div className="mb-6">
               <h4 className="mb-2 text-sm font-semibold text-gray-500">
-                时间信息
+                Time Information
               </h4>
               <div className="flex flex-wrap gap-4">
                 {task.dueDate && (
                   <div className="flex items-center gap-2">
-                    <span className="text-gray-600">截止时间:</span>
+                    <span className="text-gray-600">Due Date:</span>
                     <span className="font-medium">
                       {new Date(task.dueDate).toLocaleString()}
                     </span>
@@ -800,17 +799,17 @@ export default function ProjectBoard() {
                 )}
                 {task.estimatedHours && (
                   <div className="flex items-center gap-2">
-                    <span className="text-gray-600">预估工时:</span>
+                    <span className="text-gray-600">Estimated Hours:</span>
                     <span className="font-medium">
-                      {task.estimatedHours} 小时
+                      {task.estimatedHours} hours
                     </span>
                   </div>
                 )}
                 {task.actualHours && (
                   <div className="flex items-center gap-2">
-                    <span className="text-gray-600">实际工时:</span>
+                    <span className="text-gray-600">Actual Hours:</span>
                     <span className="font-medium">
-                      {task.actualHours} 小时
+                      {task.actualHours} hours
                     </span>
                   </div>
                 )}
@@ -821,7 +820,7 @@ export default function ProjectBoard() {
           {task.description && (
             <div className="mb-6">
               <h4 className="mb-2 text-sm font-semibold text-gray-500">
-                任务描述
+                Task Description
               </h4>
               <p className="leading-relaxed text-gray-700">
                 {task.description}
@@ -832,7 +831,7 @@ export default function ProjectBoard() {
           {task.tags.length > 0 && (
             <div className="mb-6">
               <h4 className="mb-2 text-sm font-semibold text-gray-500">
-                标签
+                Tags
               </h4>
               <div className="flex flex-wrap gap-2">
                 {task.tags.map((tag) => (
@@ -850,19 +849,19 @@ export default function ProjectBoard() {
           {task.assignee && (
             <div className="mb-6">
               <h4 className="mb-2 text-sm font-semibold text-gray-500">
-                分配人员
+                Assigned To
               </h4>
               <div className="text-gray-700">
                 {task.assignee.name}
                 {task.assignee.email
-                  ? `（${task.assignee.email}）`
+                  ? ` (${task.assignee.email})`
                   : null}
               </div>
             </div>
           )}
 
           <div className="text-sm text-gray-400">
-            创建时间：{task.createdAt}
+            Created At: {task.createdAt}
           </div>
         </div>
       </div>
@@ -880,12 +879,12 @@ export default function ProjectBoard() {
     const [selectPos, setSelectPos] = useState({ x: 0, y: 0 });
     const [showTimeEdit, setShowTimeEdit] = useState(false);
 
-    // 阻止按钮区域的拖拽事件
+    // Prevent drag on button area
     const preventDrag = (event) => {
       event.stopPropagation();
     };
 
-    // 处理分配人员点击
+    // Handle assignee click
     const handleAssigneeClick = (event) => {
       event.preventDefault();
       event.stopPropagation();
@@ -893,14 +892,14 @@ export default function ProjectBoard() {
       setSelectPos({ x: event.clientX, y: event.clientY });
     };
 
-    // 处理时间设置点击
+    // Handle time settings click
     const handleTimeClick = (event) => {
       event.preventDefault();
       event.stopPropagation();
       setShowTimeEdit(true);
     };
 
-    // 处理分配人员选择
+    // Handle assignee selection
     const handleUserSelect = async (selectedUserId) => {
       const selectedUser =
         users.find((member) => String(member.id) === String(selectedUserId)) ||
@@ -945,8 +944,8 @@ export default function ProjectBoard() {
           )
         );
       } catch (error) {
-        console.error("更新任务失败：", error);
-        alert(error.message || "更新任务失败");
+        console.error("Failed to update task:", error);
+        alert(error.message || "Failed to update task");
         setStatuses((prev) =>
           prev.map((status) =>
             status.id === statusId
@@ -963,10 +962,10 @@ export default function ProjectBoard() {
       }
     };
 
-    // 处理时间保存
+    // Handle time save
     const handleTimeSave = async (updatedTask) => {
       if (!user || !routeProjectId) {
-        throw new Error("用户未登录或项目不存在");
+        throw new Error("User not logged in or project does not exist");
       }
 
       const updateData = {
@@ -1000,7 +999,7 @@ export default function ProjectBoard() {
 
         const payload = await res.json();
 
-        // 更新本地状态
+        // Update local state
         setStatuses((prev) =>
           prev.map((status) =>
             status.id === statusId
@@ -1021,12 +1020,12 @@ export default function ProjectBoard() {
 
         return payload;
       } catch (error) {
-        console.error("更新时间失败:", error);
-        throw new Error("更新时间失败: " + error.message);
+        console.error("Failed to update time:", error);
+        throw new Error("Failed to update time: " + error.message);
       }
     };
 
-    // 格式化时间显示
+    // Format due date display
     const formatDueDate = (dueDate) => {
       if (!dueDate) return '';
       const date = new Date(dueDate);
@@ -1034,9 +1033,9 @@ export default function ProjectBoard() {
       const isToday = date.toDateString() === now.toDateString();
       const isTomorrow = new Date(now.setDate(now.getDate() + 1)).toDateString() === date.toDateString();
 
-      if (isToday) return '今天';
-      if (isTomorrow) return '明天';
-      return date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
+      if (isToday) return 'Today';
+      if (isTomorrow) return 'Tomorrow';
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     };
 
     return (
@@ -1051,14 +1050,14 @@ export default function ProjectBoard() {
           className="mb-3 rounded-md border border-gray-200 bg-white p-4 shadow-sm transition-all hover:shadow-md cursor-grab active:cursor-grabbing"
           onClick={() => setSelectedTask(task)}
           {...attributes}
-          {...listeners} // 将拖拽功能应用到整个卡片
+          {...listeners} // Apply drag functionality to the entire card
         >
-          {/* 标题区域 */}
+          {/* Title Area */}
           <div className="mb-2">
             <h4 className="font-medium text-gray-900">{task.title}</h4>
           </div>
 
-          {/* 时间信息显示 */}
+          {/* Time Information Display */}
           {(task.dueDate || task.estimatedHours || task.actualHours) && (
             <div className="mt-2 flex flex-wrap gap-1">
               {task.dueDate && (
@@ -1098,34 +1097,34 @@ export default function ProjectBoard() {
             </div>
           )}
 
-          {/* 操作按钮区域 - 阻止拖拽事件 */}
+          {/* Action Buttons Area - Prevent drag events */}
           <div
             className="mt-3 flex flex-wrap gap-2"
             onPointerDown={preventDrag}
             onMouseDown={preventDrag}
             onTouchStart={preventDrag}
           >
-            {/* 分配人员按钮 */}
+            {/* Assign User Button */}
             <button
               onClick={handleAssigneeClick}
               className="text-xs text-gray-700 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 border border-gray-300 rounded px-2 py-1 transition-colors flex items-center gap-1"
             >
-              👤 {task.assignee ? task.assignee.name : "分配人员"}
+              👤 {task.assignee ? task.assignee.name : "Assign User"}
             </button>
 
-            {/* 设置时间按钮 */}
+            {/* Set Time Button */}
             <button
               onClick={handleTimeClick}
               className="text-xs text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 border border-blue-300 rounded px-2 py-1 transition-colors flex items-center gap-1"
             >
-              ⚙️ 设置时间
+              ⚙️ Set Time
             </button>
           </div>
 
           <div className="mt-2 text-xs text-gray-600">{task.createdAt}</div>
         </div>
 
-        {/* 时间编辑模态框 */}
+        {/* Time Edit Modal */}
         {showTimeEdit && (
           <TimeEditModal
             task={task}
@@ -1134,7 +1133,7 @@ export default function ProjectBoard() {
           />
         )}
 
-        {/* 分配人员选择器 */}
+        {/* Assignee Selector */}
         {showAssigneeSelect && (
           <div
             style={{
@@ -1155,7 +1154,7 @@ export default function ProjectBoard() {
               onClick={() => handleUserSelect("")}
               className="cursor-pointer px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
             >
-              未分配
+              Unassigned
             </div>
             {users.map((member) => (
               <div
@@ -1178,7 +1177,7 @@ export default function ProjectBoard() {
       data: { statusId: status.id },
     });
 
-    // 🔥 检查当前拖拽的任务是否会影响这个状态列
+    // 🔥 Check if the currently dragged task affects this status column
     const shouldHighlight = isOver || (active?.data?.current?.statusId === status.id);
 
     return (
@@ -1193,7 +1192,7 @@ export default function ProjectBoard() {
           ref={setNodeRef}
           {...attributes}
           className={`min-h-[500px] rounded-lg border p-3 transition-all duration-200 ${
-            shouldHighlight && active // 🔥 只有在有拖拽活动且应该高亮时才高亮
+            shouldHighlight && active // 🔥 Only highlight when there's a drag active and it should highlight
               ? "border-gray-300 bg-gray-100"
               : "border-gray-200 bg-gray-50 hover:border-gray-300"
           }`}
@@ -1211,36 +1210,36 @@ export default function ProjectBoard() {
     );
   };
 
-  // 处理右键菜单选择
+  // Handle context menu selection
   const handleContextMenuSelect = async (action) => {
     const { task, statusId } = contextMenu;
 
-    if (action === 'assign') {
-      // 原有的分配人员逻辑
-      setContextMenu(prev => ({ ...prev, show: false }));
-      // 这里可以打开分配人员的选择器
-    } else if (action === 'time') {
-      // 打开时间编辑模态框
+    if (action === 'time') {
+      // Open time edit modal
       setContextMenu(prev => ({ ...prev, show: false }));
       setSelectedTask({ ...task, __timeEdit: true });
+    } else if (action === 'assign') {
+      // Open assignee selector
+      setContextMenu(prev => ({ ...prev, show: false }));
+      // You can open the assignee selector here
     }
 
     setContextMenu(prev => ({ ...prev, show: false }));
   };
 
   if (loadingProjects) {
-    return <div className="p-8 text-gray-700 font-medium">加载项目中...</div>;
+    return <div className="p-8 text-gray-700 font-medium">Loading projects...</div>;
   }
 
   if (!currentProject) {
     return (
       <div className="p-8 text-gray-700">
-        项目不存在或未加载，请返回仪表盘重新选择。
+        Project does not exist or failed to load. Please return to dashboard and select again.
         <Link
           href="/dashboard"
           className="ml-2 text-blue-600 underline underline-offset-4 hover:text-blue-700"
         >
-          返回仪表盘
+          Return to Dashboard
         </Link>
       </div>
     );
@@ -1252,11 +1251,11 @@ export default function ProjectBoard() {
         <div className="mb-6">
           <Link href="/dashboard">
             <button className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800">
-              ← 返回仪表盘
+              ← Back to Dashboard
             </button>
           </Link>
         </div>
-        <h2 className="mb-4 text-lg font-semibold text-gray-800">我的项目</h2>
+        <h2 className="mb-4 text-lg font-semibold text-gray-800">My Projects</h2>
         <ul className="space-y-1">
           {allProjects.map((proj) => (
             <li key={proj.id}>
@@ -1277,7 +1276,7 @@ export default function ProjectBoard() {
 
       <div className="ml-4 flex-1 overflow-x-auto">
         <h1 className="mb-6 text-2xl font-bold text-gray-800">
-          {currentProject.name} - 项目看板
+          {currentProject.name} - Project Board
         </h1>
 
         {boardError && (
@@ -1290,7 +1289,7 @@ export default function ProjectBoard() {
           <div className="flex items-center gap-3">
             <input
               type="text"
-              placeholder="添加新状态列（如：待测试）"
+              placeholder="Add new status column (e.g.: Testing)"
               value={newStatusName}
               onChange={(event) => setNewStatusName(event.target.value)}
               className="w-64 rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -1299,7 +1298,7 @@ export default function ProjectBoard() {
               onClick={createStatus}
               className="rounded-md bg-green-600 px-4 py-2 text-white transition-colors hover:bg-green-700"
             >
-              添加状态列
+              Add Status Column
             </button>
           </div>
 
@@ -1307,7 +1306,7 @@ export default function ProjectBoard() {
             <div className="grid grid-cols-1 gap-4 md:grid-cols-6">
               <div>
                 <label className="mb-1 block text-sm text-gray-700 font-medium">
-                  任务标题 <span className="text-red-500">*</span>
+                  Task Title <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -1318,14 +1317,14 @@ export default function ProjectBoard() {
                       title: event.target.value,
                     }))
                   }
-                  placeholder="输入标题..."
+                  placeholder="Enter title..."
                   className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
               <div>
                 <label className="mb-1 block text-sm text-gray-600">
-                  描述（可选）
+                  Description (Optional)
                 </label>
                 <textarea
                   value={newTask.description}
@@ -1335,7 +1334,7 @@ export default function ProjectBoard() {
                       description: event.target.value,
                     }))
                   }
-                  placeholder="任务详情..."
+                  placeholder="Task details..."
                   rows={2}
                   className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
@@ -1343,7 +1342,7 @@ export default function ProjectBoard() {
 
               <div>
                 <label className="mb-1 block text-sm text-gray-600">
-                  标签（可选，逗号分隔）
+                  Tags (Optional, comma separated)
                 </label>
                 <input
                   type="text"
@@ -1354,14 +1353,14 @@ export default function ProjectBoard() {
                       tags: event.target.value,
                     }))
                   }
-                  placeholder="如：bug,前端,紧急"
+                  placeholder="e.g.: bug,frontend,urgent"
                   className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
               <div>
                 <label className="mb-1 block text-sm text-gray-600">
-                  分配人员
+                  Assignee
                 </label>
                 <select
                   value={newTask.assignee?.id || ""}
@@ -1378,9 +1377,9 @@ export default function ProjectBoard() {
                     newTask.assignee?.id ? 'text-gray-900' : 'text-gray-500'
                   }`}
                 >
-                  <option value="" className="text-gray-500">未分配</option>
+                  <option value="" className="text-gray-500">Unassigned</option>
                   {usersLoading ? (
-                    <option value="" className="text-gray-500">加载中...</option>
+                    <option value="" className="text-gray-500">Loading...</option>
                   ) : (
                     users.map((member) => (
                       <option key={member.id} value={member.id} className="text-gray-900">
@@ -1393,7 +1392,7 @@ export default function ProjectBoard() {
 
               <div>
                 <label className="mb-1 block text-sm text-gray-600">
-                  截止时间
+                  Due Date
                 </label>
                 <input
                   type="datetime-local"
@@ -1411,7 +1410,7 @@ export default function ProjectBoard() {
 
               <div>
                 <label className="mb-1 block text-sm text-gray-600">
-                  预估工时 (小时)
+                  Estimated Hours
                 </label>
                 <input
                   type="number"
@@ -1423,7 +1422,7 @@ export default function ProjectBoard() {
                       estimatedHours: event.target.value ? Number(event.target.value) : null,
                     }))
                   }
-                  placeholder="如：8"
+                  placeholder="e.g.: 8"
                   className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 <button
@@ -1433,7 +1432,7 @@ export default function ProjectBoard() {
                   }
                   className="mt-4 w-full rounded-md bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-300"
                 >
-                  创建任务
+                  Create Task
                 </button>
               </div>
             </div>
@@ -1441,10 +1440,10 @@ export default function ProjectBoard() {
         </div>
 
         {loadingBoard ? (
-          <div className="p-6 text-gray-500">看板数据加载中...</div>
+          <div className="p-6 text-gray-500">Loading board data...</div>
         ) : statuses.length === 0 ? (
           <div className="p-6 text-gray-500">
-            暂无状态列，请先添加状态列以创建任务。
+            No status columns available. Please add a status column first to create tasks.
           </div>
         ) : (
           <DndContext
@@ -1484,10 +1483,10 @@ export default function ProjectBoard() {
         )}
       </div>
 
-      {/* 任务详情模态框 */}
+      {/* Task Detail Modal */}
       <TaskDetailModal task={selectedTask && !selectedTask.__timeEdit ? selectedTask : null} onClose={() => setSelectedTask(null)} />
 
-      {/* 时间编辑模态框 */}
+      {/* Time Edit Modal */}
       {selectedTask && selectedTask.__timeEdit && (
         <TimeEditModal
           task={selectedTask}
@@ -1496,7 +1495,7 @@ export default function ProjectBoard() {
         />
       )}
 
-      {/* 右键菜单 */}
+      {/* Context Menu */}
       {contextMenu.show && (
         <div
           style={{
@@ -1517,13 +1516,13 @@ export default function ProjectBoard() {
             onClick={() => handleContextMenuSelect('time')}
             className="cursor-pointer px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
           >
-            ⚙️ 设置时间
+            ⚙️ Set Time
           </div>
           <div
             onClick={() => handleContextMenuSelect('assign')}
             className="cursor-pointer px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
           >
-            👤 分配人员
+            👤 Assign User
           </div>
         </div>
       )}

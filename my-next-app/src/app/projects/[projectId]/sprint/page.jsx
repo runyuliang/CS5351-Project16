@@ -36,8 +36,8 @@ function TaskCard({ task, onTitleChange, onStatusClick, getTaskStatus }) {
         ) : title}
       </div>
       <button
-        // onClick={(e) => { e.stopPropagation(); onStatusClick(task); }}
         className="mt-1 px-2 py-1 bg-blue-500 text-white rounded text-xs"
+        // onClick={(e) => { e.stopPropagation(); onStatusClick(task); }}
       >
         {getTaskStatus(task)}
       </button>
@@ -51,7 +51,7 @@ function Column({ title, items, droppableId, onTaskTitleChange, onStatusClick, g
 
   return (
     <div ref={setNodeRef} className={`w-80 mr-4 p-3 rounded border ${isOver ? 'border-blue-400' : 'border-gray-200'} bg-gray-50`}>
-      <div className="font-semibold mb-3">{title} ({items.length})</div>
+      <div className="font-semibold mb-3 text-gray-600">{title} ({items.length})</div>
       <div>
         {items.map((t) => (
           <TaskCard
@@ -70,23 +70,24 @@ function Column({ title, items, droppableId, onTaskTitleChange, onStatusClick, g
 export default function SprintPageClient() {
   const { projectId } = useParams();
   const pid = Number(projectId);
-  const [columns, setColumns] = useState([]); // 🔥 添加列状态
+  const [columns, setColumns] = useState([]);
 
   const [sprints, setSprints] = useState([]);
   const [backlog, setBacklog] = useState([]);
   const [loading, setLoading] = useState(true);
   const [newSprintName, setNewSprintName] = useState('');
-  const [dueDate, setDueDate] = useState(''); // 新增截止时间
+  const [dueDate, setDueDate] = useState('');
   const [activeDrag, setActiveDrag] = useState(null);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [currentTask, setCurrentTask] = useState(null);
 
+  // 状态映射改为英文
   const STATUS_TO_ORDER = {
-    "未开始": 1,
-    "进行中": 2,
-    "审核中": 3,
-    "完成": 4,
+    "Not Started": 1,
+    "In Progress": 2,
+    "In Review": 3,
+    "Completed": 4,
   };
 
   const fetchColumns = useCallback(async () => {
@@ -95,7 +96,7 @@ export default function SprintPageClient() {
       const data = await res.json();
       setColumns(data || []);
     } catch (err) {
-      console.error('获取列信息失败:', err);
+      console.error('Failed to fetch columns:', err);
     }
   }, [pid]);
 
@@ -103,11 +104,10 @@ export default function SprintPageClient() {
     fetchColumns();
   }, [fetchColumns]);
 
-  // 🔥 获取任务状态显示
   const getTaskStatus = useCallback((task) => {
-    if (!task.columnId) return '未分配';
+    if (!task.columnId) return 'Unassigned';
     const column = columns.find(col => col.id === task.columnId);
-    return column ? column.name : `列 ${task.columnId}`;
+    return column ? column.name : `Column ${task.columnId}`;
   }, [columns]);
 
   const fetchData = useCallback(async () => {
@@ -142,7 +142,7 @@ export default function SprintPageClient() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ taskId, sprintId })
       });
-      if (!res.ok) throw new Error('任务分配失败');
+      if (!res.ok) throw new Error('Failed to assign task');
       await fetchData();
     } catch (err) { console.error(err); }
   };
@@ -173,11 +173,11 @@ export default function SprintPageClient() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             userId: 1,
-            columnId: currentTask.columnId // 🔥 只更新 columnId
+            columnId: currentTask.columnId
           }),
         });
 
-        if (!res.ok) throw new Error("状态更新失败");
+        if (!res.ok) throw new Error("Failed to update status");
 
         await fetchData();
         setModalOpen(false);
@@ -185,12 +185,12 @@ export default function SprintPageClient() {
 
       } catch (err) {
         console.error(err);
-        alert("修改状态失败");
+        alert("Failed to update status");
       }
     };
 
   const handleCreateSprint = async () => {
-    if (!newSprintName.trim()) return alert('请输入 Sprint 名称');
+    if (!newSprintName.trim()) return alert('Please enter a sprint name');
     try {
       const res = await fetch(`/api/projects/${pid}/sprint`, {
         method: 'POST',
@@ -200,11 +200,11 @@ export default function SprintPageClient() {
           dueDate: dueDate ? new Date(dueDate).toISOString() : null
         }),
       });
-      if (!res.ok) throw new Error('创建失败');
+      if (!res.ok) throw new Error('Creation failed');
       setNewSprintName('');
       setDueDate('');
       await fetchData();
-    } catch (err) { console.error(err); alert('创建 Sprint 失败'); }
+    } catch (err) { console.error(err); alert('Failed to create sprint'); }
   };
 
   const handleSprintStatusChange = async (sprintId, status) => {
@@ -214,19 +214,31 @@ export default function SprintPageClient() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status }),
       });
-      if (!res.ok) throw new Error('更新失败');
+      if (!res.ok) throw new Error('Update failed');
       await fetchData();
-    } catch (err) { console.error(err); alert('更新 Sprint 状态失败'); }
+    } catch (err) { console.error(err); alert('Failed to update sprint status'); }
   };
 
   return (
     <div className="flex h-screen p-6 bg-gray-100">
       <div className="w-72 mr-6">
-        <h2 className="font-semibold text-lg mb-3">Backlog</h2>
+        <h2 className="font-semibold text-lg mb-3 text-gray-700">Backlog</h2>
         <div className="mb-4 flex flex-col">
-          <input className="w-full mb-2 px-2 py-1 border rounded" placeholder="新 Sprint 名称" value={newSprintName} onChange={(e) => setNewSprintName(e.target.value)} />
-          <input type="datetime-local" className="w-full mb-2 px-2 py-1 border rounded" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
-          <button onClick={handleCreateSprint} className="w-full py-2 rounded bg-blue-600 text-white mb-2">创建 Sprint</button>
+          {/* 输入框浅颜色文字加深：text-gray-700 */}
+          <input
+            className="w-full mb-2 px-2 py-1 border rounded text-gray-700"
+            placeholder="New Sprint Name"
+            value={newSprintName}
+            onChange={(e) => setNewSprintName(e.target.value)}
+          />
+          {/* datetime-local 输入框同样调整文字颜色 */}
+          <input
+            type="datetime-local"
+            className="w-full mb-2 px-2 py-1 border rounded text-gray-700"
+            value={dueDate}
+            onChange={(e) => setDueDate(e.target.value)}
+          />
+          <button onClick={handleCreateSprint} className="w-full py-2 rounded bg-blue-600 text-white mb-2">Create Sprint</button>
         </div>
       </div>
 
@@ -240,18 +252,20 @@ export default function SprintPageClient() {
             onStatusClick={handleStatusClick}
             getTaskStatus={getTaskStatus}
           />
-          {loading ? <div>加载中...</div> : sprints.map((s) => (
+          {loading ? <div>Loading...</div> : sprints.map((s) => (
             <div key={s.id} id={`sprint-${s.id}`} className="p-2 border rounded bg-gray-50">
               <div className="flex justify-between items-center mb-2">
-                <span className="font-semibold">{s.name} #{s.order} {s.dueDate ? `- 截止: ${new Date(s.dueDate).toLocaleString()}` : ''}</span>
+                <span className="font-semibold">
+                  {s.name} #{s.order} {s.dueDate ? `- Due: ${new Date(s.dueDate).toLocaleString()}` : ''}
+                </span>
                 <select
                   value={s.status}
                   onChange={(e) => handleSprintStatusChange(s.id, e.target.value)}
-                  className="border rounded px-2 py-1 text-xs"
+                  className="border rounded px-2 py-1 text-xs text-gray-700" // 下拉框文字加深
                 >
-                  <option value="未开始">未开始</option>
-                  <option value="正在冲刺">正在冲刺</option>
-                  <option value="完成">完成</option>
+                  <option value="Not Started">Not Started</option>
+                  <option value="In Progress">In Progress</option>
+                  <option value="Completed">Completed</option>
                 </select>
               </div>
               <Column
@@ -276,15 +290,15 @@ export default function SprintPageClient() {
       {modalOpen && currentTask && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
           <div className="bg-white p-4 rounded shadow w-80">
-            <h3 className="font-semibold mb-2">修改任务状态</h3>
+            <h3 className="font-semibold mb-2">Update Task Status</h3>
             <select
               value={currentTask.columnId || ''}
               onChange={(e) => setCurrentTask({...currentTask,
                 columnId: e.target.value ? Number(e.target.value) : null
               })}
-              className="w-full border rounded px-2 py-1 mb-4 text-gray-900"
+              className="w-full border rounded px-2 py-1 mb-4 text-gray-700" // 下拉框文字加深
             >
-              <option value="">未分配</option>
+              <option value="">Unassigned</option>
               {columns.map((column) => (
                 <option key={column.id} value={column.id}>
                   {column.name}
@@ -292,8 +306,8 @@ export default function SprintPageClient() {
               ))}
             </select>
             <div className="flex justify-end space-x-2">
-              <button className="px-3 py-1 bg-gray-300 rounded" onClick={() => setModalOpen(false)}>取消</button>
-              <button className="px-3 py-1 bg-blue-500 text-white rounded" onClick={handleStatusSave}>保存</button>
+              <button className="px-3 py-1 bg-gray-300 rounded" onClick={() => setModalOpen(false)}>Cancel</button>
+              <button className="px-3 py-1 bg-blue-500 text-white rounded" onClick={handleStatusSave}>Save</button>
             </div>
           </div>
         </div>

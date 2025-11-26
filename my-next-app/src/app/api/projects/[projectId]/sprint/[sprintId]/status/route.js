@@ -9,7 +9,7 @@ export async function PATCH(req, context) {
 
     const { status } = await req.json();
 
-    if (!["未开始", "正在冲刺", "完成"].includes(status)) {
+    if (!["Not Started", "In Progress", "Completed"].includes(status)) {
       return new Response("Invalid status", { status: 400 });
     }
 
@@ -21,9 +21,9 @@ export async function PATCH(req, context) {
     });
 
     // 如果是完成状态，处理任务
-    if (status === "完成") {
-      const tasksToBacklog = sprint.tasks.filter(t => t.status !== "完成");
-      const tasksToDelete = sprint.tasks.filter(t => t.status === "完成");
+    if (status === "Completed") {
+      const tasksToBacklog = sprint.tasks.filter(t => t.status !== "Completed");
+      const tasksToDelete = sprint.tasks.filter(t => t.status === "Completed");
 
       // 移回 backlog
       for (const task of tasksToBacklog) {
@@ -44,6 +44,6 @@ export async function PATCH(req, context) {
     return new Response(JSON.stringify(sprint), { status: 200 });
   } catch (err) {
     console.error(err);
-    return new Response("更新失败", { status: 500 });
+    return new Response("Failed to update", { status: 500 });
   }
 }

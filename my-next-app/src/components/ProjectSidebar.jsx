@@ -3,6 +3,7 @@ import Link from "next/link";
 
 /**
  * 可复用的侧边栏组件
+ * Reusable Sidebar Component
  * @param {Object} props - 组件属性
  * @param {Array} props.allProjects - 所有项目列表，每个项目需包含 id 和 name 属性
  * @param {string|null} props.currentProjectId - 当前选中项目的 ID，用于高亮显示
@@ -11,19 +12,19 @@ import Link from "next/link";
 export default function Sidebar({ allProjects, currentProjectId }) {
   return (
     <div className="w-36 bg-white border-r border-gray-200 p-4 overflow-y-auto">
-      {/* 返回仪表盘链接 */}
+      {/* 返回仪表盘链接 - Back to Dashboard Link */}
       <div className="mb-6">
         <Link href="/dashboard">
           <button className="text-blue-600 hover:text-blue-800 text-sm flex items-center gap-1">
-            ← 返回仪表盘
+            ← Back to Dashboard
           </button>
         </Link>
       </div>
-      
-      {/* 项目列表标题 */}
-      <h2 className="text-lg font-semibold text-gray-800 mb-4">我的项目</h2>
-      
-      {/* 项目列表 */}
+
+      {/* 项目列表标题 - Project List Title */}
+      <h2 className="text-lg font-semibold text-gray-800 mb-4">My Projects</h2>
+
+      {/* 项目列表 - Project List */}
       <ul className="space-y-1">
         {allProjects.map(proj => (
           <li key={proj.id}>

@@ -68,7 +68,6 @@ export async function POST(req, context) {
             data: {
               columnId,
               position: index,
-              // 🔥 移除了 status 字段
             },
           })
         );
