@@ -1,17 +1,18 @@
 // PATCH /api/projects/[projectId]/sprint/[sprintId]/status
 import prisma from "@/lib/prisma";
 
-export async function PATCH(req, { params }) {
-  const { sprintId } = params;
-  const { status } = await req.json();
-
-  if (!["未开始", "正在冲刺", "完成"].includes(status)) {
-    return new Response("Invalid status", { status: 400 });
-  }
-
+// ✅ 修复后的代码
+export async function PATCH(req, context) {
   try {
-    const { springId } = params;
-    const sprintId = Number(springId);
+    const params = await context.params; // 🔥 使用正确的参数获取方式
+    const sprintId = Number(params.sprintId);
+
+    const { status } = await req.json();
+
+    if (!["未开始", "正在冲刺", "完成"].includes(status)) {
+      return new Response("Invalid status", { status: 400 });
+    }
+
     // 先更新 Sprint 状态
     const sprint = await prisma.sprint.update({
       where: { id: sprintId },
@@ -19,7 +20,7 @@ export async function PATCH(req, { params }) {
       include: { tasks: true },
     });
 
-    // 如果是完成状态，检查任务
+    // 如果是完成状态，处理任务
     if (status === "完成") {
       const tasksToBacklog = sprint.tasks.filter(t => t.status !== "完成");
       const tasksToDelete = sprint.tasks.filter(t => t.status === "完成");
@@ -28,7 +29,7 @@ export async function PATCH(req, { params }) {
       for (const task of tasksToBacklog) {
         await prisma.boardTask.update({
           where: { id: task.id },
-          data: { sprintId: null } // 设置为 backlog
+          data: { sprintId: null }
         });
       }
 
