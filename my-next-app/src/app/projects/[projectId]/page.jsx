@@ -140,7 +140,7 @@ const TimeEditModal = ({ task, onSave, onClose }) => {
                 name="dueDate"
                 value={formData.dueDate}
                 onChange={handleChange}
-                className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
 
@@ -168,7 +168,7 @@ const TimeEditModal = ({ task, onSave, onClose }) => {
                 value={formData.estimatedHours}
                 onChange={handleChange}
                 placeholder="输入预估工时"
-                className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
 
@@ -196,7 +196,7 @@ const TimeEditModal = ({ task, onSave, onClose }) => {
                 value={formData.actualHours}
                 onChange={handleChange}
                 placeholder="输入实际工时"
-                className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
           </div>
@@ -1068,7 +1068,7 @@ export default function ProjectBoard() {
         )}
 
         {task.description && (
-          <p className="mt-2 line-clamp-2 text-sm text-gray-600">
+          <p className="mt-2 line-clamp-2 text-sm text-gray-700">
             {task.description}
           </p>
         )}
@@ -1096,7 +1096,7 @@ export default function ProjectBoard() {
           {/* 分配人员按钮 */}
           <button
             onClick={handleAssigneeClick}
-            className="text-xs text-gray-600 hover:text-gray-800 bg-gray-100 hover:bg-gray-200 border border-gray-300 rounded px-2 py-1 transition-colors flex items-center gap-1"
+            className="text-xs text-gray-700 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 border border-gray-300 rounded px-2 py-1 transition-colors flex items-center gap-1"
           >
             👤 {task.assignee ? task.assignee.name : "分配人员"}
           </button>
@@ -1110,7 +1110,7 @@ export default function ProjectBoard() {
           </button>
         </div>
 
-        <div className="mt-2 text-xs text-gray-400">{task.createdAt}</div>
+        <div className="mt-2 text-xs text-gray-600">{task.createdAt}</div>
       </div>
 
       {/* 时间编辑模态框 */}
@@ -1210,12 +1210,12 @@ export default function ProjectBoard() {
   };
 
   if (loadingProjects) {
-    return <div className="p-8 text-gray-500">加载项目中...</div>;
+    return <div className="p-8 text-gray-700 font-medium">加载项目中...</div>;
   }
 
   if (!currentProject) {
     return (
-      <div className="p-8 text-gray-500">
+      <div className="p-8 text-gray-700">
         项目不存在或未加载，请返回仪表盘重新选择。
         <Link
           href="/dashboard"
@@ -1274,7 +1274,7 @@ export default function ProjectBoard() {
               placeholder="添加新状态列（如：待测试）"
               value={newStatusName}
               onChange={(event) => setNewStatusName(event.target.value)}
-              className="w-64 rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-64 rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             <button
               onClick={createStatus}
@@ -1287,7 +1287,7 @@ export default function ProjectBoard() {
           <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
             <div className="grid grid-cols-1 gap-4 md:grid-cols-6">
               <div>
-                <label className="mb-1 block text-sm text-gray-600">
+                <label className="mb-1 block text-sm text-gray-700 font-medium">
                   任务标题 <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -1300,7 +1300,7 @@ export default function ProjectBoard() {
                     }))
                   }
                   placeholder="输入标题..."
-                  className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
@@ -1318,7 +1318,7 @@ export default function ProjectBoard() {
                   }
                   placeholder="任务详情..."
                   rows={2}
-                  className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
@@ -1336,7 +1336,7 @@ export default function ProjectBoard() {
                     }))
                   }
                   placeholder="如：bug,前端,紧急"
-                  className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
@@ -1350,20 +1350,21 @@ export default function ProjectBoard() {
                     const selectedUser = users.find(
                       (member) => String(member.id) === event.target.value
                     );
-                    setNewTask((prev) => ({
-                      ...prev,
+                    setNewTask((prev) => ({...prev,
                       assignee: selectedUser || null,
                     }));
                   }}
                   disabled={usersLoading}
-                  className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className={`w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    newTask.assignee?.id ? 'text-gray-900' : 'text-gray-500'
+                  }`}
                 >
-                  <option value="">未分配</option>
+                  <option value="" className="text-gray-500">未分配</option>
                   {usersLoading ? (
-                    <option value="">加载中...</option>
+                    <option value="" className="text-gray-500">加载中...</option>
                   ) : (
                     users.map((member) => (
-                      <option key={member.id} value={member.id}>
+                      <option key={member.id} value={member.id} className="text-gray-900">
                         {member.name || member.email}
                       </option>
                     ))
@@ -1379,12 +1380,13 @@ export default function ProjectBoard() {
                   type="datetime-local"
                   value={newTask.dueDate || ''}
                   onChange={(event) =>
-                    setNewTask((prev) => ({
-                      ...prev,
+                    setNewTask((prev) => ({...prev,
                       dueDate: event.target.value,
                     }))
                   }
-                  className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className={`w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    newTask.dueDate ? 'text-gray-900' : 'text-gray-500'
+                  }`}
                 />
               </div>
 
@@ -1398,13 +1400,12 @@ export default function ProjectBoard() {
                   step="0.5"
                   value={newTask.estimatedHours || ''}
                   onChange={(event) =>
-                    setNewTask((prev) => ({
-                      ...prev,
+                    setNewTask((prev) => ({...prev,
                       estimatedHours: event.target.value ? Number(event.target.value) : null,
                     }))
                   }
                   placeholder="如：8"
-                  className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 <button
                   onClick={createTask}
