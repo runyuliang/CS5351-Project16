@@ -534,6 +534,18 @@ export default function ProjectBoard() {
       return;
     }
 
+    // 计算拖拽距离
+    const dragDistance = Math.sqrt(
+      Math.pow(event.delta.x, 2) + Math.pow(event.delta.y, 2)
+    );
+
+    // 如果拖拽距离小于阈值90
+    if (dragDistance < 90) {
+      setActiveTask(null);
+      setActiveStatusId("");
+      return;
+    }
+
     let targetStatusId = null;
     if (overData?.statusId) {
       targetStatusId = overData.statusId;
