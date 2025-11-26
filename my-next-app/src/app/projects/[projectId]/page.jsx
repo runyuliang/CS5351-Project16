@@ -870,313 +870,316 @@ export default function ProjectBoard() {
   };
 
   const TaskItem = ({ task, statusId }) => {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
-    useSortable({
-      id: `task_${task.id}`,
-      data: { taskId: task.id, task, statusId },
-    });
+    const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
+      useSortable({
+        id: `task_${task.id}`,
+        data: { taskId: task.id, task, statusId },
+      });
 
-  const [showAssigneeSelect, setShowAssigneeSelect] = useState(false);
-  const [selectPos, setSelectPos] = useState({ x: 0, y: 0 });
-  const [showTimeEdit, setShowTimeEdit] = useState(false);
+    const [showAssigneeSelect, setShowAssigneeSelect] = useState(false);
+    const [selectPos, setSelectPos] = useState({ x: 0, y: 0 });
+    const [showTimeEdit, setShowTimeEdit] = useState(false);
 
-  // 阻止按钮区域的拖拽事件
-  const preventDrag = (event) => {
-    event.stopPropagation();
-  };
-
-  // 处理分配人员点击
-  const handleAssigneeClick = (event) => {
-    event.preventDefault();
-    event.stopPropagation();
-    setShowAssigneeSelect(true);
-    setSelectPos({ x: event.clientX, y: event.clientY });
-  };
-
-  // 处理时间设置点击
-  const handleTimeClick = (event) => {
-    event.preventDefault();
-    event.stopPropagation();
-    setShowTimeEdit(true);
-  };
-
-  // 处理分配人员选择
-  const handleUserSelect = async (selectedUserId) => {
-    const selectedUser =
-      users.find((member) => String(member.id) === String(selectedUserId)) ||
-      null;
-    const previousAssignee = task.assignee;
-
-    setStatuses((prev) =>
-      prev.map((status) =>
-        status.id === statusId
-          ? {...status,
-              tasks: status.tasks.map((item) =>
-                item.id === task.id ? {...item, assignee: selectedUser } : item
-              ),
-            }
-          : status
-      )
-    );
-
-    setShowAssigneeSelect(false);
-
-    try {
-      const payload = await persistAssignee(
-        Number(task.numericId ?? task.id),
-        selectedUser ? selectedUser.id : null
-      );
-      const formatted = formatTask(payload);
-
-      setStatuses((prev) =>
-        prev.map((status) =>
-          status.id === statusId
-            ? {...status,
-                tasks: status.tasks.map((item) =>
-                  item.id === task.id
-                    ? {...item,
-                        assignee: formatted.assignee,
-                        updatedAt: formatted.updatedAt,
-                      }
-                    : item
-                ),
-              }
-            : status
-        )
-      );
-    } catch (error) {
-      console.error("更新任务失败：", error);
-      alert(error.message || "更新任务失败");
-      setStatuses((prev) =>
-        prev.map((status) =>
-          status.id === statusId
-            ? {...status,
-                tasks: status.tasks.map((item) =>
-                  item.id === task.id
-                    ? {...item, assignee: previousAssignee }
-                    : item
-                ),
-              }
-            : status
-        )
-      );
-    }
-  };
-
-  // 处理时间保存
-  const handleTimeSave = async (updatedTask) => {
-    if (!user || !routeProjectId) {
-      throw new Error("用户未登录或项目不存在");
-    }
-
-    const updateData = {
-      userId: user.id,
+    // 阻止按钮区域的拖拽事件
+    const preventDrag = (event) => {
+      event.stopPropagation();
     };
 
-    if (updatedTask.dueDate !== undefined) {
-      updateData.dueDate = updatedTask.dueDate;
-    }
-    if (updatedTask.estimatedHours !== undefined) {
-      updateData.estimatedHours = updatedTask.estimatedHours;
-    }
-    if (updatedTask.actualHours !== undefined) {
-      updateData.actualHours = updatedTask.actualHours;
-    }
+    // 处理分配人员点击
+    const handleAssigneeClick = (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      setShowAssigneeSelect(true);
+      setSelectPos({ x: event.clientX, y: event.clientY });
+    };
 
-    try {
-      const res = await fetch(
-        `/api/projects/${routeProjectId}/board/tasks/${task.numericId ?? task.id}`,
-        {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(updateData),
-        }
-      );
+    // 处理时间设置点击
+    const handleTimeClick = (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      setShowTimeEdit(true);
+    };
 
-      if (!res.ok) {
-        const errorText = await res.text();
-        throw new Error(`HTTP error! status: ${res.status}`);
-      }
+    // 处理分配人员选择
+    const handleUserSelect = async (selectedUserId) => {
+      const selectedUser =
+        users.find((member) => String(member.id) === String(selectedUserId)) ||
+        null;
+      const previousAssignee = task.assignee;
 
-      const payload = await res.json();
-
-      // 更新本地状态
       setStatuses((prev) =>
         prev.map((status) =>
           status.id === statusId
             ? {...status,
                 tasks: status.tasks.map((item) =>
-                  item.id === task.id
-                    ? {...item,
-                        dueDate: payload.dueDate,
-                        estimatedHours: payload.estimatedHours,
-                        actualHours: payload.actualHours,
-                      }
-                    : item
+                  item.id === task.id ? {...item, assignee: selectedUser } : item
                 ),
               }
             : status
         )
       );
 
-      return payload;
-    } catch (error) {
-      console.error("更新时间失败:", error);
-      throw new Error("更新时间失败: " + error.message);
-    }
-  };
+      setShowAssigneeSelect(false);
 
-  // 格式化时间显示
-  const formatDueDate = (dueDate) => {
-    if (!dueDate) return '';
-    const date = new Date(dueDate);
-    const now = new Date();
-    const isToday = date.toDateString() === now.toDateString();
-    const isTomorrow = new Date(now.setDate(now.getDate() + 1)).toDateString() === date.toDateString();
+      try {
+        const payload = await persistAssignee(
+          Number(task.numericId ?? task.id),
+          selectedUser ? selectedUser.id : null
+        );
+        const formatted = formatTask(payload);
 
-    if (isToday) return '今天';
-    if (isTomorrow) return '明天';
-    return date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
-  };
+        setStatuses((prev) =>
+          prev.map((status) =>
+            status.id === statusId
+              ? {...status,
+                  tasks: status.tasks.map((item) =>
+                    item.id === task.id
+                      ? {...item,
+                          assignee: formatted.assignee,
+                          updatedAt: formatted.updatedAt,
+                        }
+                      : item
+                  ),
+                }
+              : status
+          )
+        );
+      } catch (error) {
+        console.error("更新任务失败：", error);
+        alert(error.message || "更新任务失败");
+        setStatuses((prev) =>
+          prev.map((status) =>
+            status.id === statusId
+              ? {...status,
+                  tasks: status.tasks.map((item) =>
+                    item.id === task.id
+                      ? {...item, assignee: previousAssignee }
+                      : item
+                  ),
+                }
+              : status
+          )
+        );
+      }
+    };
 
-  return (
-    <>
-      <div
-        ref={setNodeRef}
-        style={{
-          transform: CSS.Transform.toString(transform),
-          transition,
-          opacity: isDragging ? 0.4 : 1,
-        }}
-        className="mb-3 rounded-md border border-gray-200 bg-white p-4 shadow-sm transition-all hover:shadow-md cursor-grab active:cursor-grabbing"
-        onClick={() => setSelectedTask(task)}
-        {...attributes}
-        {...listeners} // 将拖拽功能应用到整个卡片
-      >
-        {/* 标题区域 */}
-        <div className="mb-2">
-          <h4 className="font-medium text-gray-900">{task.title}</h4>
+    // 处理时间保存
+    const handleTimeSave = async (updatedTask) => {
+      if (!user || !routeProjectId) {
+        throw new Error("用户未登录或项目不存在");
+      }
+
+      const updateData = {
+        userId: user.id,
+      };
+
+      if (updatedTask.dueDate !== undefined) {
+        updateData.dueDate = updatedTask.dueDate;
+      }
+      if (updatedTask.estimatedHours !== undefined) {
+        updateData.estimatedHours = updatedTask.estimatedHours;
+      }
+      if (updatedTask.actualHours !== undefined) {
+        updateData.actualHours = updatedTask.actualHours;
+      }
+
+      try {
+        const res = await fetch(
+          `/api/projects/${routeProjectId}/board/tasks/${task.numericId ?? task.id}`,
+          {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(updateData),
+          }
+        );
+
+        if (!res.ok) {
+          const errorText = await res.text();
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+
+        const payload = await res.json();
+
+        // 更新本地状态
+        setStatuses((prev) =>
+          prev.map((status) =>
+            status.id === statusId
+              ? {...status,
+                  tasks: status.tasks.map((item) =>
+                    item.id === task.id
+                      ? {...item,
+                          dueDate: payload.dueDate,
+                          estimatedHours: payload.estimatedHours,
+                          actualHours: payload.actualHours,
+                        }
+                      : item
+                  ),
+                }
+              : status
+          )
+        );
+
+        return payload;
+      } catch (error) {
+        console.error("更新时间失败:", error);
+        throw new Error("更新时间失败: " + error.message);
+      }
+    };
+
+    // 格式化时间显示
+    const formatDueDate = (dueDate) => {
+      if (!dueDate) return '';
+      const date = new Date(dueDate);
+      const now = new Date();
+      const isToday = date.toDateString() === now.toDateString();
+      const isTomorrow = new Date(now.setDate(now.getDate() + 1)).toDateString() === date.toDateString();
+
+      if (isToday) return '今天';
+      if (isTomorrow) return '明天';
+      return date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
+    };
+
+    return (
+      <>
+        <div
+          ref={setNodeRef}
+          style={{
+            transform: CSS.Transform.toString(transform),
+            transition,
+            opacity: isDragging ? 0.4 : 1,
+          }}
+          className="mb-3 rounded-md border border-gray-200 bg-white p-4 shadow-sm transition-all hover:shadow-md cursor-grab active:cursor-grabbing"
+          onClick={() => setSelectedTask(task)}
+          {...attributes}
+          {...listeners} // 将拖拽功能应用到整个卡片
+        >
+          {/* 标题区域 */}
+          <div className="mb-2">
+            <h4 className="font-medium text-gray-900">{task.title}</h4>
+          </div>
+
+          {/* 时间信息显示 */}
+          {(task.dueDate || task.estimatedHours || task.actualHours) && (
+            <div className="mt-2 flex flex-wrap gap-1">
+              {task.dueDate && (
+                <span className="text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded flex items-center gap-1">
+                  📅 {formatDueDate(task.dueDate)}
+                </span>
+              )}
+              {task.estimatedHours && (
+                <span className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded flex items-center gap-1">
+                  ⏱️ {task.estimatedHours}h
+                </span>
+              )}
+              {task.actualHours && (
+                <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded flex items-center gap-1">
+                  ✅ {task.actualHours}h
+                </span>
+              )}
+            </div>
+          )}
+
+          {task.description && (
+            <p className="mt-2 line-clamp-2 text-sm text-gray-700">
+              {task.description}
+            </p>
+          )}
+
+          {task.tags.length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-1">
+              {task.tags.map((tag) => (
+                <span
+                  key={tag}
+                  className="rounded-full bg-blue-50 px-2 py-0.5 text-xs text-blue-700"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          )}
+
+          {/* 操作按钮区域 - 阻止拖拽事件 */}
+          <div
+            className="mt-3 flex flex-wrap gap-2"
+            onPointerDown={preventDrag}
+            onMouseDown={preventDrag}
+            onTouchStart={preventDrag}
+          >
+            {/* 分配人员按钮 */}
+            <button
+              onClick={handleAssigneeClick}
+              className="text-xs text-gray-700 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 border border-gray-300 rounded px-2 py-1 transition-colors flex items-center gap-1"
+            >
+              👤 {task.assignee ? task.assignee.name : "分配人员"}
+            </button>
+
+            {/* 设置时间按钮 */}
+            <button
+              onClick={handleTimeClick}
+              className="text-xs text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 border border-blue-300 rounded px-2 py-1 transition-colors flex items-center gap-1"
+            >
+              ⚙️ 设置时间
+            </button>
+          </div>
+
+          <div className="mt-2 text-xs text-gray-600">{task.createdAt}</div>
         </div>
 
-        {/* 时间信息显示 */}
-        {(task.dueDate || task.estimatedHours || task.actualHours) && (
-          <div className="mt-2 flex flex-wrap gap-1">
-            {task.dueDate && (
-              <span className="text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded flex items-center gap-1">
-                📅 {formatDueDate(task.dueDate)}
-              </span>
-            )}
-            {task.estimatedHours && (
-              <span className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded flex items-center gap-1">
-                ⏱️ {task.estimatedHours}h
-              </span>
-            )}
-            {task.actualHours && (
-              <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded flex items-center gap-1">
-                ✅ {task.actualHours}h
-              </span>
-            )}
-          </div>
+        {/* 时间编辑模态框 */}
+        {showTimeEdit && (
+          <TimeEditModal
+            task={task}
+            onSave={handleTimeSave}
+            onClose={() => setShowTimeEdit(false)}
+          />
         )}
 
-        {task.description && (
-          <p className="mt-2 line-clamp-2 text-sm text-gray-700">
-            {task.description}
-          </p>
-        )}
-
-        {task.tags.length > 0 && (
-          <div className="mt-2 flex flex-wrap gap-1">
-            {task.tags.map((tag) => (
-              <span
-                key={tag}
-                className="rounded-full bg-blue-50 px-2 py-0.5 text-xs text-blue-700"
+        {/* 分配人员选择器 */}
+        {showAssigneeSelect && (
+          <div
+            style={{
+              position: "fixed",
+              left: selectPos.x,
+              top: selectPos.y,
+              backgroundColor: "white",
+              border: "1px solid #e5e7eb",
+              borderRadius: "4px",
+              padding: "4px",
+              boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
+              minWidth: "140px",
+              zIndex: 1000,
+            }}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div
+              onClick={() => handleUserSelect("")}
+              className="cursor-pointer px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
+            >
+              未分配
+            </div>
+            {users.map((member) => (
+              <div
+                key={member.id}
+                onClick={() => handleUserSelect(member.id)}
+                className="cursor-pointer px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
               >
-                {tag}
-              </span>
+                {member.name || member.email}
+              </div>
             ))}
           </div>
         )}
-
-        {/* 操作按钮区域 - 阻止拖拽事件 */}
-        <div
-          className="mt-3 flex flex-wrap gap-2"
-          onPointerDown={preventDrag}
-          onMouseDown={preventDrag}
-          onTouchStart={preventDrag}
-        >
-          {/* 分配人员按钮 */}
-          <button
-            onClick={handleAssigneeClick}
-            className="text-xs text-gray-700 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 border border-gray-300 rounded px-2 py-1 transition-colors flex items-center gap-1"
-          >
-            👤 {task.assignee ? task.assignee.name : "分配人员"}
-          </button>
-
-          {/* 设置时间按钮 */}
-          <button
-            onClick={handleTimeClick}
-            className="text-xs text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 border border-blue-300 rounded px-2 py-1 transition-colors flex items-center gap-1"
-          >
-            ⚙️ 设置时间
-          </button>
-        </div>
-
-        <div className="mt-2 text-xs text-gray-600">{task.createdAt}</div>
-      </div>
-
-      {/* 时间编辑模态框 */}
-      {showTimeEdit && (
-        <TimeEditModal
-          task={task}
-          onSave={handleTimeSave}
-          onClose={() => setShowTimeEdit(false)}
-        />
-      )}
-
-      {/* 分配人员选择器 */}
-      {showAssigneeSelect && (
-        <div
-          style={{
-            position: "fixed",
-            left: selectPos.x,
-            top: selectPos.y,
-            backgroundColor: "white",
-            border: "1px solid #e5e7eb",
-            borderRadius: "4px",
-            padding: "4px",
-            boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
-            minWidth: "140px",
-            zIndex: 1000,
-          }}
-          onClick={(event) => event.stopPropagation()}
-        >
-          <div
-            onClick={() => handleUserSelect("")}
-            className="cursor-pointer px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
-          >
-            未分配
-          </div>
-          {users.map((member) => (
-            <div
-              key={member.id}
-              onClick={() => handleUserSelect(member.id)}
-              className="cursor-pointer px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
-            >
-              {member.name || member.email}
-            </div>
-          ))}
-        </div>
-      )}
-    </>
-  );
-};
+      </>
+    );
+  };
 
   const StatusColumn = ({ status }) => {
-    const { setNodeRef, attributes } = useDroppable({
+    const { setNodeRef, attributes, isOver, active } = useDroppable({
       id: status.id,
       data: { statusId: status.id },
     });
+
+    // 🔥 检查当前拖拽的任务是否会影响这个状态列
+    const shouldHighlight = isOver || (active?.data?.current?.statusId === status.id);
 
     return (
       <div className="mr-6 w-80 flex-shrink-0">
@@ -1189,7 +1192,11 @@ export default function ProjectBoard() {
         <div
           ref={setNodeRef}
           {...attributes}
-          className="min-h-[500px] rounded-lg border border-gray-200 bg-gray-50 p-3 transition-all hover:border-gray-300"
+          className={`min-h-[500px] rounded-lg border p-3 transition-all duration-200 ${
+            shouldHighlight && active // 🔥 只有在有拖拽活动且应该高亮时才高亮
+              ? "border-gray-300 bg-gray-100"
+              : "border-gray-200 bg-gray-50 hover:border-gray-300"
+          }`}
         >
           <SortableContext
             items={status.tasks.map((task) => `task_${task.id}`)}
