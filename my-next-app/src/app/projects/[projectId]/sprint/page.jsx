@@ -11,7 +11,15 @@ function TaskCard({ task, onTitleChange, onStatusClick, getTaskStatus }) {
     data: { task },
   });
 
-  const style = { transform: CSS.Transform.toString(transform), opacity: isDragging ? 0.5 : 1, cursor: 'grab' };
+  const transformValue = CSS.Transform.toString(transform);
+  const style = {
+    transform: transformValue === 'none' ? undefined : transformValue,
+    opacity: isDragging ? 0 : 1,
+    cursor: isDragging ? 'grabbing' : 'grab',
+    transition: isDragging ? 'none' : 'transform 200ms ease, box-shadow 200ms ease',
+    boxShadow: isDragging ? '0 18px 40px rgba(59,130,246,0.35)' : 'none',
+  };
+
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState(task.title);
 
@@ -22,26 +30,44 @@ function TaskCard({ task, onTitleChange, onStatusClick, getTaskStatus }) {
   };
   const handleKeyDown = (e) => { if (e.key === 'Enter') e.target.blur(); };
 
-  return (
-    <div ref={setNodeRef} style={style} className="mb-2 p-3 rounded border bg-white shadow hover:shadow-lg transition">
-      <div {...attributes} {...listeners} onDoubleClick={handleDoubleClick} className="font-medium cursor-grab">
+  /* ---------- 拖拽预览与原始卡片共用样式 ---------- */
+  const cardContent = (
+    <div className={`w-72 p-3 rounded-2xl border border-slate-100 bg-white/80 backdrop-blur shadow-sm hover:-translate-y-0.5 hover:shadow-2xl transition-all duration-200 ${isDragging ? 'scale-[1.02] border-sky-200 ring-2 ring-sky-100/70 shadow-2xl shadow-sky-200' : ''}`}>
+      <div
+        {...attributes}
+        {...listeners}
+        onDoubleClick={handleDoubleClick}
+        className="font-medium cursor-grab"
+      >
         {editing ? (
           <input
             className="w-full border px-1 py-0.5 rounded"
-            value={title} autoFocus
+            value={title}
+            autoFocus
             onChange={(e) => setTitle(e.target.value)}
             onBlur={handleBlur}
             onKeyDown={handleKeyDown}
           />
-        ) : title}
+        ) : (
+          title
+        )}
       </div>
       <button
-        className="mt-1 px-2 py-1 bg-blue-500 text-white rounded text-xs"
-        // onClick={(e) => { e.stopPropagation(); onStatusClick(task); }}
+        className="mt-3 inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-white rounded-full bg-gradient-to-r from-sky-500 via-indigo-500 to-purple-500 shadow-lg shadow-indigo-200/70 hover:shadow-indigo-400/70 transition"
+        onClick={(e) => { e.stopPropagation(); onStatusClick(task); }}
       >
+        <span className="inline-block w-2 h-2 rounded-full bg-white/70 animate-pulse" />
         {getTaskStatus(task)}
       </button>
-      {task.assignee && <div className="text-xs text-gray-500 mt-1">👤 {task.assignee.name}</div>}
+      {task.assignee && (
+        <div className="text-xs text-gray-500 mt-1">👤 {task.assignee.name}</div>
+      )}
+    </div>
+  );
+
+  return (
+    <div ref={setNodeRef} style={style} className="mb-2">
+      {cardContent}
     </div>
   );
 }
@@ -50,7 +76,10 @@ function Column({ title, items, droppableId, onTaskTitleChange, onStatusClick, g
   const { isOver, setNodeRef } = useDroppable({ id: droppableId });
 
   return (
-    <div ref={setNodeRef} className={`w-80 mr-4 p-3 rounded border ${isOver ? 'border-blue-400' : 'border-gray-200'} bg-gray-50`}>
+    <div
+      ref={setNodeRef}
+      className={`w-80 mr-4 p-3 rounded-3xl border transition-all duration-200 ${isOver ? 'border-sky-400/80 bg-white shadow-xl shadow-sky-100 ring-2 ring-sky-100' : 'border-gray-200 bg-gray-50/80'}`}
+    >
       <div className="font-semibold mb-3 text-gray-600">{title} ({items.length})</div>
       <div>
         {items.map((t) => (
@@ -223,7 +252,7 @@ export default function SprintPageClient() {
     <div className="flex h-screen p-6 bg-gray-100">
       <div className="w-72 mr-6">
         <h2 className="font-semibold text-lg mb-3 text-gray-700">Backlog</h2>
-        <div className="mb-4 flex flex-col">
+        <div className="mb-4 flex flex-col rounded-2xl border border-slate-200 bg-white/70 backdrop-blur p-4 shadow-sm">
           {/* 输入框浅颜色文字加深：text-gray-700 */}
           <input
             className="w-full mb-2 px-2 py-1 border rounded text-gray-700"
@@ -238,7 +267,12 @@ export default function SprintPageClient() {
             value={dueDate}
             onChange={(e) => setDueDate(e.target.value)}
           />
-          <button onClick={handleCreateSprint} className="w-full py-2 rounded bg-blue-600 text-white mb-2">Create Sprint</button>
+          <button
+            onClick={handleCreateSprint}
+            className="w-full py-2.5 rounded-full bg-gradient-to-r from-sky-500 via-indigo-500 to-purple-600 text-white font-medium shadow-lg shadow-indigo-200/70 hover:-translate-y-0.5 hover:shadow-indigo-300/70 transition"
+          >
+            Create Sprint
+          </button>
         </div>
       </div>
 
@@ -253,15 +287,15 @@ export default function SprintPageClient() {
             getTaskStatus={getTaskStatus}
           />
           {loading ? <div>Loading...</div> : sprints.map((s) => (
-            <div key={s.id} id={`sprint-${s.id}`} className="p-2 border rounded bg-gray-50">
+            <div key={s.id} id={`sprint-${s.id}`} className="p-4 border rounded-3xl bg-white/80 backdrop-blur shadow-sm hover:shadow-lg transition">
               <div className="flex justify-between items-center mb-2">
-                <span className="font-semibold">
+                <span className="font-semibold text-gray-700">
                   {s.name} #{s.order} {s.dueDate ? `- Due: ${new Date(s.dueDate).toLocaleString()}` : ''}
                 </span>
                 <select
                   value={s.status}
                   onChange={(e) => handleSprintStatusChange(s.id, e.target.value)}
-                  className="border rounded px-2 py-1 text-xs text-gray-700" // 下拉框文字加深
+                  className="border rounded-full px-3 py-1 text-xs text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-sky-300 transition" // 下拉框文字加深
                 >
                   <option value="Not Started">Not Started</option>
                   <option value="In Progress">In Progress</option>
@@ -282,7 +316,14 @@ export default function SprintPageClient() {
 
         <DragOverlay>
           {activeDrag?.data?.current?.task && (
-            <div className="w-64 p-3 bg-white rounded shadow">{activeDrag.data.current.task.title}</div>
+            <div className="w-80 p-4 rounded-2xl border border-transparent bg-gradient-to-br from-white via-slate-50 to-slate-100 shadow-2xl shadow-sky-200 animate-[pulse_1.2s_ease-in-out_infinite]">
+              <div className="font-semibold text-gray-800">{activeDrag.data.current.task.title}</div>
+              {activeDrag.data.current.task.assignee && (
+                <div className="text-xs text-gray-500 mt-1">
+                  👤 {activeDrag.data.current.task.assignee.name}
+                </div>
+              )}
+            </div>
           )}
         </DragOverlay>
       </DndContext>
@@ -306,8 +347,8 @@ export default function SprintPageClient() {
               ))}
             </select>
             <div className="flex justify-end space-x-2">
-              <button className="px-3 py-1 bg-gray-300 rounded" onClick={() => setModalOpen(false)}>Cancel</button>
-              <button className="px-3 py-1 bg-blue-500 text-white rounded" onClick={handleStatusSave}>Save</button>
+              <button className="px-4 py-1.5 rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200 transition" onClick={() => setModalOpen(false)}>Cancel</button>
+              <button className="px-4 py-1.5 rounded-full bg-gradient-to-r from-sky-500 to-indigo-500 text-white font-medium shadow-lg shadow-indigo-200/70 hover:-translate-y-0.5 transition" onClick={handleStatusSave}>Save</button>
             </div>
           </div>
         </div>
