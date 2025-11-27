@@ -14,7 +14,6 @@ export async function POST(req, context) {
         { status: 400 }
       );
     }
-    
 
     const access = await getProjectWithAccess(projectId, Number(userId));
     if (access.error) {
@@ -28,7 +27,7 @@ export async function POST(req, context) {
       where: { projectId, id: { in: uniqueColumnIds } },
       select: { id: true },
     });
-    
+
     if (columns.length !== uniqueColumnIds.length) {
       return NextResponse.json(
         { error: "One or more columns do not belong to this project" },
@@ -36,8 +35,7 @@ export async function POST(req, context) {
       );
     }
 
-    const taskIds = [
-      ...new Set(
+    const taskIds = [...new Set(
         updates.flatMap((item) =>
           Array.isArray(item.taskIds) ? item.taskIds.map((id) => Number(id)) : []
         )
@@ -56,6 +54,7 @@ export async function POST(req, context) {
       );
     }
 
+    // 🔥 简化：只更新 columnId 和 position，不需要 status
     await prisma.$transaction(
       updates.flatMap((item) => {
         const columnId = Number(item.columnId);
@@ -84,4 +83,3 @@ export async function POST(req, context) {
     );
   }
 }
-

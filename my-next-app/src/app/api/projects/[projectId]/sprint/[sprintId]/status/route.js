@@ -1,0 +1,49 @@
+// PATCH /api/projects/[projectId]/sprint/[sprintId]/status
+import prisma from "@/lib/prisma";
+
+// ✅ 修复后的代码
+export async function PATCH(req, context) {
+  try {
+    const params = await context.params; // 🔥 使用正确的参数获取方式
+    const sprintId = Number(params.sprintId);
+
+    const { status } = await req.json();
+
+    if (!["Not Started", "In Progress", "Completed"].includes(status)) {
+      return new Response("Invalid status", { status: 400 });
+    }
+
+    // 先更新 Sprint 状态
+    const sprint = await prisma.sprint.update({
+      where: { id: sprintId },
+      data: { status },
+      include: { tasks: true },
+    });
+
+    // 如果是完成状态，处理任务
+    if (status === "Completed") {
+      const tasksToBacklog = sprint.tasks.filter(t => t.status !== "Completed");
+      const tasksToDelete = sprint.tasks.filter(t => t.status === "Completed");
+
+      // 移回 backlog
+      for (const task of tasksToBacklog) {
+        await prisma.boardTask.update({
+          where: { id: task.id },
+          data: { sprintId: null }
+        });
+      }
+
+      // 删除已完成任务
+      for (const task of tasksToDelete) {
+        await prisma.boardTask.delete({
+          where: { id: task.id }
+        });
+      }
+    }
+
+    return new Response(JSON.stringify(sprint), { status: 200 });
+  } catch (err) {
+    console.error(err);
+    return new Response("Failed to update", { status: 500 });
+  }
+}
